@@ -1,0 +1,2 @@
+# ducksearch
+Search with DuckDB
