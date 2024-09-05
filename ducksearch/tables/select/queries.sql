@@ -1,0 +1,3 @@
+SELECT *
+FROM queries
+ORDER BY id ASC;

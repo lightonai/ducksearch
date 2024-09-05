@@ -3,6 +3,12 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+*.ipynb
+*.duckdb
+duckdb_tmp/
+
+evaluation_datasets/
+
 # C extensions
 *.so
 
