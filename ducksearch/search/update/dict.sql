@@ -12,4 +12,3 @@ UPDATE {schema}.dict d
 SET df = d.df + nt.df
 FROM new_terms nt
 WHERE d.termid = nt.existing_id;
-

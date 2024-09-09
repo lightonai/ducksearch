@@ -17,6 +17,13 @@ def _create_tables() -> None:
 
 
 @execute_with_duckdb(
+    relative_path="search/drop/scores.sql",
+)
+def _drop_scores_to_recompute() -> None:
+    """Drop the BM25 scores to recompute from the DuckDB database."""
+
+
+@execute_with_duckdb(
     relative_path="search/select/settings_exists.sql",
     fetch_df=True,
 )
@@ -242,6 +249,7 @@ def update_index(
         if isinstance(stopwords, list):
             stopwords_table = pa.Table.from_pydict({"sw": stopwords})
             pq.write_table(stopwords_table, "_stopwords.parquet", compression="snappy")
+
             _insert_stopwords(
                 database=database,
                 schema=bm25_schema,
@@ -253,7 +261,12 @@ def update_index(
             if os.path.exists("_stopwords.parquet"):
                 os.remove("_stopwords.parquet")
 
-        _create_settings(database=database, schema=bm25_schema, config=config)
+        _create_settings(
+            database=database,
+            schema=bm25_schema,
+            config=config,
+        )
+
         _insert_settings(
             database=database,
             schema=bm25_schema,
@@ -267,7 +280,11 @@ def update_index(
             config=config,
         )
 
-    settings = _select_settings(database=database, schema=bm25_schema, config=config)[0]
+    settings = _select_settings(
+        database=database,
+        schema=bm25_schema,
+        config=config,
+    )[0]
 
     if (
         settings["k1"] != k1
@@ -283,22 +300,65 @@ def update_index(
         )
 
     logging.info("Parsing document tokens.")
-    _create_index(database=database, schema=bm25_schema, **settings, config=config)
+    _create_index(
+        database=database,
+        schema=bm25_schema,
+        **settings,
+        config=config,
+    )
 
     logging.info("Updating index metadata.")
-    _update_dict(database=database, schema=bm25_schema, config=config)
-    _update_docs(database=database, schema=bm25_schema, config=config)
-    _update_stats(database=database, schema=bm25_schema, config=config)
-    _update_terms(database=database, schema=bm25_schema, config=config)
+    _update_dict(
+        database=database,
+        schema=bm25_schema,
+        config=config,
+    )
+
+    _update_docs(
+        database=database,
+        schema=bm25_schema,
+        config=config,
+    )
+
+    _update_stats(
+        database=database,
+        schema=bm25_schema,
+        config=config,
+    )
+
+    _update_terms(
+        database=database,
+        schema=bm25_schema,
+        config=config,
+    )
 
     termids_to_score = _termids_to_score(
-        database=database, schema=bm25_schema, config=config, max_df=100_000
+        database=database,
+        schema=bm25_schema,
+        config=config,
+        max_df=100_000,
     )
-    stats = _stats(database=database, schema=bm25_schema, config=config)[0]
+
+    _drop_scores_to_recompute(
+        database=database,
+        schema=bm25_schema,
+        config=config,
+    )
+
+    stats = _stats(
+        database=database,
+        schema=bm25_schema,
+        config=config,
+    )[0]
+
     num_docs = stats["num_docs"]
     avgdl = stats["avgdl"]
 
-    for batch in batchify(termids_to_score, batch_size=batch_size, desc="Indexing"):
+    for batch in batchify(
+        termids_to_score,
+        batch_size=batch_size,
+        desc="Indexing",
+    ):
         termids = pa.Table.from_pydict({"termid": [term["termid"] for term in batch]})
         pq.write_table(termids, "_termids.parquet", compression="snappy")
 
@@ -313,8 +373,18 @@ def update_index(
             config=config,
         )
 
-    _drop_schema(database=database, schema=bm25_schema, config=config)
-    _drop_documents(database=database, schema=bm25_schema, config=config)
+    _drop_schema(
+        database=database,
+        schema=bm25_schema,
+        config=config,
+    )
+
+    _drop_documents(
+        database=database,
+        schema=bm25_schema,
+        config=config,
+    )
+
     _update_bm25id(
         database=database,
         schema=bm25_schema,
@@ -382,7 +452,11 @@ def update_index_documents(
 
     """
     fields = ", ".join(
-        select_documents_columns(database=database, schema="bm25_tables", config=config)
+        select_documents_columns(
+            database=database,
+            schema="bm25_tables",
+            config=config,
+        )
     )
 
     update_index(
