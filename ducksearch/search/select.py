@@ -299,8 +299,10 @@ def search(
     >>> assert len(documents[0]) == 10
 
     """
+    is_query_str = False
     if isinstance(queries, str):
         queries = [queries]
+        is_query_str = True
 
     logging.info("Indexing queries.")
     index_table = pa.Table.from_pydict({"query": queries})
@@ -356,4 +358,4 @@ def search(
     ):
         matchs.extend(match)
 
-    return matchs
+    return matchs[0] if is_query_str else matchs

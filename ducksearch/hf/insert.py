@@ -16,6 +16,7 @@ def insert_documents(
     fields: str | list[str],
     url: str,
     config: dict | None = None,
+    limit: int | None = None,
 ) -> None:
     """Insert documents from a Hugging Face dataset into DuckDB.
 
@@ -55,6 +56,8 @@ def insert_documents(
 
     fields = [field for field in fields if field != "id"]
 
+    limit_hf = f"LIMIT {limit}" if limit is not None else ""
+
     if not fields:
         fields.append(key)
 
@@ -64,5 +67,6 @@ def insert_documents(
         url=url,
         key_field=key,
         fields=", ".join(fields),
+        limit_hf=limit_hf,
         config=config,
     )

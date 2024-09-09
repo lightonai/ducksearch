@@ -22,9 +22,12 @@ def documents(
     stopwords: str | list[str] = "english",
     ignore: str = "(\\.|[^a-z])+",
     strip_accents: bool = True,
+    lower: bool = True,
     batch_size: int = 30_000,
     n_jobs: int = -1,
+    dtypes: dict[str, str] | None = None,
     config: dict | None = None,
+    limit: int | None = None,
 ) -> str:
     """Upload documents to DuckDB, create necessary schema, and index using BM25.
 
@@ -70,10 +73,31 @@ def documents(
 
     fields = [field for field in fields if field != "id"]
 
-    create_schema(database=database, schema=schema, config=config)
-    create_queries(database=database, schema=schema, config=config)
-    create_documents(database=database, schema=schema, fields=fields, config=config)
-    create_documents_queries(database=database, schema=schema, config=config)
+    create_schema(
+        database=database,
+        schema=schema,
+        config=config,
+    )
+
+    create_queries(
+        database=database,
+        schema=schema,
+        config=config,
+    )
+
+    create_documents(
+        database=database,
+        schema=schema,
+        dtypes=dtypes,
+        fields=fields,
+        config=config,
+    )
+
+    create_documents_queries(
+        database=database,
+        schema=schema,
+        config=config,
+    )
 
     insert_documents(
         database=database,
@@ -82,8 +106,10 @@ def documents(
         key=key,
         fields=fields,
         batch_size=batch_size,
+        dtypes=dtypes,
         n_jobs=n_jobs,
         config=config,
+        limit=limit,
     )
 
     update_index_documents(
@@ -94,6 +120,7 @@ def documents(
         stopwords=stopwords,
         ignore=ignore,
         strip_accents=strip_accents,
+        lower=lower,
         batch_size=batch_size,
         config=config,
     )
@@ -121,6 +148,7 @@ def queries(
     stopwords: str | list[str] = "english",
     ignore: str = "(\\.|[^a-z])+",
     strip_accents: bool = True,
+    lower: bool = True,
     batch_size: int = 30_000,
     config: dict | None = None,
 ) -> str:
@@ -162,9 +190,23 @@ def queries(
     """
     schema = "bm25_tables"
 
-    create_schema(database=database, schema=schema, config=config)
-    create_queries(database=database, schema=schema, config=config)
-    create_documents_queries(database=database, schema=schema, config=config)
+    create_schema(
+        database=database,
+        schema=schema,
+        config=config,
+    )
+
+    create_queries(
+        database=database,
+        schema=schema,
+        config=config,
+    )
+
+    create_documents_queries(
+        database=database,
+        schema=schema,
+        config=config,
+    )
 
     if queries is not None:
         insert_queries(
@@ -190,6 +232,7 @@ def queries(
         stopwords=stopwords,
         ignore=ignore,
         strip_accents=strip_accents,
+        lower=lower,
         batch_size=batch_size,
         config=config,
     )

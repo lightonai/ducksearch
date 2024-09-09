@@ -79,10 +79,11 @@ def insert_documents(
     df: list[dict] | str,
     key: str,
     fields: list[str] | str,
-    fields_types: dict[str, str] | None = None,
+    dtypes: dict[str, str] | None = None,
     batch_size: int = 30_000,
     n_jobs: int = -1,
     config: dict | None = None,
+    limit: int | None = None,
 ) -> None:
     """Insert documents into the documents table with optional multi-threading.
 
@@ -98,7 +99,7 @@ def insert_documents(
         The field that uniquely identifies each document (e.g., 'id').
     fields
         The list of document fields to insert. Can be a string if inserting a single field.
-    fields_types
+    dtypes
         Optional dictionary specifying the DuckDB type for each field. Defaults to 'VARCHAR' for all unspecified fields.
     batch_size
         The number of documents to insert in each batch. Default is 30,000.
@@ -138,6 +139,7 @@ def insert_documents(
             fields=fields,
             url=df,
             config=config,
+            limit=limit,
         )
 
     if isinstance(df, pd.DataFrame):
@@ -148,7 +150,7 @@ def insert_documents(
         schema=schema,
         fields=fields,
         config=config,
-        fields_types=fields_types,
+        dtypes=dtypes,
     )
 
     documents_path = os.path.join(".", "duckdb_tmp", "documents")
@@ -315,6 +317,9 @@ def insert_documents_queries(
 
     document_ids, queries, scores = [], [], []
     for document_id, document_queries in documents_queries.items():
+        if isinstance(document_queries, list):
+            document_queries = {query: 1.0 for query in document_queries}
+
         for query, score in document_queries.items():
             document_ids.append(document_id)
             queries.append(query)

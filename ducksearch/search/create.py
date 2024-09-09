@@ -213,6 +213,12 @@ def update_index(
     | bm25_documents | 5183 |
 
     """
+    if stemmer is None or not stemmer:
+        stemmer = "none"
+
+    if stopwords is None or not stopwords:
+        stopwords = []
+
     if isinstance(fields, list):
         fields = ", ".join(fields)
 
@@ -329,6 +335,7 @@ def update_index_documents(
     stopwords: str | list[str] = "english",
     ignore: str = "(\\.|[^a-z])+",
     strip_accents: bool = True,
+    lower: bool = True,
     batch_size: int = 10_000,
     config: dict | None = None,
 ) -> None:
@@ -386,6 +393,7 @@ def update_index_documents(
         stopwords=stopwords,
         ignore=ignore,
         strip_accents=strip_accents,
+        lower=lower,
         bm25_schema="bm25_documents",
         source_schema="bm25_tables",
         source="documents",
@@ -404,6 +412,7 @@ def update_index_queries(
     stopwords: str | list[str] = "english",
     ignore: str = "(\\.|[^a-z])+",
     strip_accents: bool = True,
+    lower: bool = True,
     batch_size: int = 10_000,
     config: dict | None = None,
 ) -> None:
@@ -458,6 +467,7 @@ def update_index_queries(
         stopwords=stopwords,
         ignore=ignore,
         strip_accents=strip_accents,
+        lower=lower,
         bm25_schema="bm25_queries",
         source_schema="bm25_tables",
         source="queries",

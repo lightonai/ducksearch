@@ -65,7 +65,7 @@ def create_documents(
     database: str,
     schema: str,
     fields: str | list[str],
-    fields_types: dict[str, str] | None = None,
+    dtypes: dict[str, str] | None = None,
     config: dict | None = None,
 ) -> None:
     """Create the documents table in the DuckDB database.
@@ -78,7 +78,7 @@ def create_documents(
         The schema in which to create the documents table.
     fields: str or list[str]
         The list of fields for the documents table. If a string is provided, it will be converted into a list.
-    fields_types: dict[str, str], optional
+    dtypes: dict[str, str], optional
         A dictionary specifying field names as keys and their DuckDB types as values. Defaults to 'VARCHAR' if not provided.
     config: dict, optional
         The configuration options for the DuckDB connection.
@@ -96,7 +96,7 @@ def create_documents(
     ...     database="test.duckdb",
     ...     schema="bm25_tables",
     ...     fields=["title", "text"],
-    ...     fields_types={"text": "VARCHAR", "title": "VARCHAR"},
+    ...     dtypes={"text": "VARCHAR", "title": "VARCHAR"},
     ... )
 
     >>> df = [
@@ -116,12 +116,10 @@ def create_documents(
     if isinstance(fields, str):
         fields = [fields]
 
-    if not fields_types:
-        fields_types = {}
+    if not dtypes:
+        dtypes = {}
 
-    fields = ", ".join(
-        [f"{field} {fields_types.get(field, 'VARCHAR')}" for field in fields]
-    )
+    fields = ", ".join([f"{field} {dtypes.get(field, 'VARCHAR')}" for field in fields])
     return _create_documents(
         database=database, schema=schema, fields=fields, config=config
     )
