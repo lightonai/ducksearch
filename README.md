@@ -13,13 +13,7 @@
 </div>
 
 <p align="justify">
-DuckSearch is a lightweight and easy-to-use library that allows to index and search documents with BM25. DuckSearch is built on top of DuckDB, a high-performance analytical database. DuckDB is designed to execute analytical SQL queries fast, and DuckSearch leverages this to provide efficient and scallable search capabilities:
-
-- Lightning fast 
-- Rich SQL syntax for filtering
-- HuggingFace datasets indexing from url
-- Streaming friendly, index on-the-fly
-- Accurate BM25 scoring
+DuckSearch is a lightweight and easy-to-use library that allows to index and search documents. DuckSearch is built on top of DuckDB, a high-performance analytical database. DuckDB is designed to execute analytical SQL queries fast, and DuckSearch leverages this to provide efficient and scallable search / filtering capabilities.
 </p>
 
 ## Installation
@@ -73,8 +67,8 @@ documents = [
 
 upload.documents(
     database="ducksearch.duckdb",
-    key="id",
-    fields=["title", "style", "date", "popularity"],
+    key="id", # unique document identifier
+    fields=["title", "style", "date", "popularity"], # list of fields to index
     documents=documents,
     dtypes={
         "date": "DATE",
@@ -90,14 +84,12 @@ We can search documents using the `search.documents` function. The function retu
 ```python
 from ducksearch import search
 
-scores = search.documents(
+search.documents(
     database="ducksearch.duckdb",
     queries=["punk", "california"],
     top_k=10,
     top_k_token=10_000,
 )
-
-print(scores)
 ```
 
 ```python
@@ -132,15 +124,13 @@ We can also filter the results using SQL syntax which will be evaluated by DuckD
 ```python
 from ducksearch import search
 
-scores = search.documents(
+search.documents(
     database="ducksearch.duckdb",
     queries="rock",
     top_k=10,
     top_k_token=10_000,
     filters="YEAR(date) < 1970 AND popularity > 9 AND style LIKE '%rock%'",
 )
-
-print(scores)
 ```
 
 ```python
@@ -162,15 +152,14 @@ List of DuckDB functions such as date functions can be found [here](https://duck
 
 ### HuggingFace
 
-The `upload.documents` function can also index HuggingFace datasets directly from the url. The documents are stored in a DuckDB database, and the fields are indexed with BM25. The `limit` parameter controls the number of documents to index. 
-
+The `upload.documents` function can also index HuggingFace datasets directly from the url. 
 The following example demonstrates how to index the FineWeb dataset from HuggingFace:
 
 ```python
 from ducksearch import upload
 
 upload.documents(
-    database="huggingface.duckdb",
+    database="fineweb.duckdb",
     key="id",
     fields=["text", "url", "date", "language", "token_count", "language_score"],
     documents="https://huggingface.co/datasets/HuggingFaceFW/fineweb/resolve/main/sample/10BT/000_00000.parquet",
@@ -188,15 +177,13 @@ We can then search the FineWeb dataset with the `search.documents` function:
 ```python
 from ducksearch import search
 
-scores = search.documents(
-    database="huggingface.duckdb",
+search.documents(
+    database="fineweb.duckdb",
     queries="earth science",
     top_k=2,
     top_k_token=10_000,
     filters="token_count > 200",
 )
-
-print(scores)
 ```
 
 ```python
@@ -277,14 +264,12 @@ upload.queries(
 	documents_queries=documents_queries,
 )
 
-scores = search.graphs(
+search.graphs(
 	database="ducksearch.duckdb",
 	queries="daft punk",
 	top_k=10,
 	top_k_token=10_000,
 )
-
-print(scores)
 ```
 
 ```python
@@ -301,6 +286,7 @@ print(scores)
 ```
 
 ## Lightning fast
+
 
 ## License
 
