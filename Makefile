@@ -1,7 +1,5 @@
-# Variables
 DIALECT := duckdb
 
-# Rules
 fix:
 	sqlfluff fix --dialect $(DIALECT)
 
@@ -39,3 +37,11 @@ tests:
 
 view:
 	harlequin test.duckdb
+
+livedoc:
+	python docs/parse
+	mkdocs build --clean
+	mkdocs serve --dirtyreload
+
+deploydoc:
+	mkdocs gh-deploy --force
