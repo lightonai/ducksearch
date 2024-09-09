@@ -21,6 +21,11 @@ dev = [
     "pytest-cov >= 5.0.0",
     "pytest >= 8.2.1",
     "harlequin >= 1.24.0",
+    "mkdocs-material == 9.5.32",
+    "mkdocs-awesome-pages-plugin == 2.9.3",
+    "mkdocs-jupyter == 0.24.8",
+    "mkdocs_charts_plugin == 0.0.10",
+    "numpydoc == 1.8.0",
 ]
 
 
@@ -29,7 +34,7 @@ setuptools.setup(
     version=f"{__version__}",
     license="MIT",
     author="LightOn",
-    description="DuckSearch: A Python library for efficient search in large collections of text data",
+    description="DuckSearch: A Python library for efficient search in large collections of text data.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/lightonai/ducksearch",
