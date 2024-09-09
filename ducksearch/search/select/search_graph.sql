@@ -16,12 +16,12 @@ _documents_matchs AS (
         iq.query,
         UNNEST(
             s.list_docids[:{top_k_token}]
-        ) as id,
+        ) AS id,
         UNNEST(
             s.list_scores[:{top_k_token}]
-        ) as score
+        ) AS score
     FROM _input_queries iq
-    INNER JOIN {documents_schema}.scores  s
+    INNER JOIN {documents_schema}.scores s
         ON iq.term = s.term
 ),
 
@@ -30,12 +30,12 @@ _queries_matchs AS (
         iq.query,
         UNNEST(
             s.list_docids[:{top_k_token}]
-        ) as id,
+        ) AS id,
         UNNEST(
             s.list_scores[:{top_k_token}]
-        ) as score
+        ) AS score
     FROM _input_queries iq
-    INNER JOIN {queries_schema}.scores  s
+    INNER JOIN {queries_schema}.scores s
         ON iq.term = s.term
 ),
 
@@ -43,7 +43,7 @@ _documents_scores AS (
     SELECT 
         query,
         id,
-        sum(score) as score
+        SUM(score) AS score
     FROM _documents_matchs
     GROUP BY 1, 2
 ),
@@ -52,7 +52,7 @@ _queries_scores AS (
     SELECT 
         query,
         id,
-        sum(score) as score
+        SUM(score) AS score
     FROM _queries_matchs
     GROUP BY 1, 2
 ),
@@ -62,7 +62,7 @@ _documents_ranks AS (
         query,
         id,
         score,
-        ROW_NUMBER() OVER (PARTITION BY query ORDER BY score DESC) as rank
+        ROW_NUMBER() OVER (PARTITION BY query ORDER BY score DESC) AS rank
     FROM _documents_scores
 ),
 
@@ -71,35 +71,31 @@ _queries_ranks AS (
         query,
         id,
         score,
-        ROW_NUMBER() OVER (PARTITION BY query ORDER BY score DESC) as rank
+        ROW_NUMBER() OVER (PARTITION BY query ORDER BY score DESC) AS rank
     FROM _queries_scores
-    
 ),
 
 _bm25_documents AS (
     SELECT
-        ps.query as _query,
-        ddocs.name as id,
+        ps.query AS _query,
+        ddocs.name AS id,
         ps.score
     FROM _documents_ranks ps
     INNER JOIN {documents_schema}.docs AS ddocs
         ON ps.id = ddocs.docid
-    WHERE ps.rank <= {top_k} 
+    WHERE ps.rank <= {top_k}
 ),
-
--- The following queries computes the BM25 scores for the queries.
 
 _bm25_queries AS (
     SELECT
-        ps.query as _query,
-        ddocs.name as id,
+        ps.query AS _query,
+        ddocs.name AS id,
         ps.score
     FROM _queries_ranks ps
     INNER JOIN {queries_schema}.docs AS ddocs
         ON ps.id = ddocs.docid
-    WHERE ps.rank <= {top_k} 
+    WHERE ps.rank <= {top_k}
 ),
-
 
 _graph AS (
     SELECT
@@ -113,54 +109,49 @@ _graph AS (
     INNER JOIN {source_schema}.documents_queries AS dqg
         ON bm25.id = dqg.document_id
     INNER JOIN _bm25_queries AS bm25q
-        ON
-            dqg.query_id = bm25q.id
-            AND bm25._query = bm25q._query
+        ON dqg.query_id = bm25q.id
+        AND bm25._query = bm25q._query
 ),
 
 _graph_scores AS (
     SELECT
         g.*,
-        coalesce(bm25.score, 0) AS src_score,
+        COALESCE(bm25.score, 0) AS src_score,
         0 AS dst_score
     FROM _graph AS g
     LEFT JOIN _bm25_documents AS bm25
-        ON
-            g.src_id = bm25.id
-            AND g._query = bm25._query
+        ON g.src_id = bm25.id
+        AND g._query = bm25._query
     WHERE src_type = 'document'
     UNION
     SELECT
         g.*,
         0 AS src_score,
-        coalesce(bm25.score, 0) AS dst_score
+        COALESCE(bm25.score, 0) AS dst_score
     FROM _graph AS g
     LEFT JOIN _bm25_documents AS bm25
-        ON
-            g.dst_id = bm25.id
-            AND g._query = bm25._query
+        ON g.dst_id = bm25.id
+        AND g._query = bm25._query
     WHERE dst_type = 'document'
     UNION
     SELECT
         g.*,
-        coalesce(bm25.score, 0) AS src_score,
+        COALESCE(bm25.score, 0) AS src_score,
         0 AS dst_score
     FROM _graph AS g
     LEFT JOIN _bm25_queries AS bm25
-        ON
-            g.src_id = bm25.id
-            AND g._query = bm25._query
+        ON g.src_id = bm25.id
+        AND g._query = bm25._query
     WHERE src_type = 'query'
     UNION
     SELECT
         g.*,
         0 AS src_score,
-        coalesce(bm25.score, 0) AS dst_score
+        COALESCE(bm25.score, 0) AS dst_score
     FROM _graph AS g
     LEFT JOIN _bm25_queries AS bm25
-        ON
-            g.dst_id = bm25.id
-            AND g._query = bm25._query
+        ON g.dst_id = bm25.id
+        AND g._query = bm25._query
     WHERE dst_type = 'query'
 ),
 
@@ -171,9 +162,9 @@ graph_scores AS (
         _query,
         src_type,
         dst_type,
-        max(src_score) AS src_score,
-        max(dst_score) AS dst_score,
-        max(edge) AS edge
+        MAX(src_score) AS src_score,
+        MAX(dst_score) AS dst_score,
+        MAX(edge) AS edge
     FROM _graph_scores
     GROUP BY 1, 2, 3, 4, 5
 ),
@@ -182,7 +173,7 @@ rank AS (
     SELECT
         src_id AS id,
         _query,
-        sum(src_score + dst_score + edge) AS score
+        SUM(src_score + dst_score + edge) AS score
     FROM graph_scores
     WHERE src_type = 'document'
     GROUP BY 1, 2
@@ -190,7 +181,7 @@ rank AS (
     SELECT
         dst_id AS id,
         _query,
-        sum(dst_score + src_score + edge) AS score
+        SUM(dst_score + src_score + edge) AS score
     FROM graph_scores
     WHERE dst_type = 'document'
     GROUP BY 1, 2
@@ -206,7 +197,7 @@ scores AS (
     SELECT
         id,
         _query,
-        max(score) AS score
+        MAX(score) AS score
     FROM rank
     GROUP BY 1, 2
 )

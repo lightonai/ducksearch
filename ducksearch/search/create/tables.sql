@@ -5,7 +5,7 @@ CREATE SEQUENCE IF NOT EXISTS SEQ_{schema}_dict START 1;
 CREATE TABLE IF NOT EXISTS {schema}.dict (
     termid INT PRIMARY KEY DEFAULT NEXTVAL('SEQ_{schema}_dict'),
     term VARCHAR,
-    df int
+    df INT
 );
 
 CREATE TABLE IF NOT EXISTS {schema}.scores (
@@ -19,7 +19,7 @@ CREATE SEQUENCE IF NOT EXISTS SEQ_{schema}_docs START 1;
 CREATE TABLE IF NOT EXISTS {schema}.docs (
     docid INT PRIMARY KEY DEFAULT NEXTVAL('SEQ_{schema}_docs'),
     len INT,
-    name VARCHAR,
+    name VARCHAR
 );
 
 CREATE TABLE IF NOT EXISTS {schema}.stats (
@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS {schema}.stopwords (
 );
 
 CREATE OR REPLACE TABLE {schema}._documents AS (
-    WITH indexed_documents AS (
+    WITH _indexed_documents AS (
         SELECT
             s.*,
             d.name AS existing_id
@@ -52,6 +52,6 @@ CREATE OR REPLACE TABLE {schema}._documents AS (
         CONCAT_WS(' ', 
             {fields}
         ) AS _search
-    FROM indexed_documents
+    FROM _indexed_documents
     WHERE existing_id IS NULL
 );

@@ -17,12 +17,10 @@ _distinct_documents_queries AS (
         dq.document_id AS existing_id
     FROM _documents_queries_scores AS dqw
     INNER JOIN {schema}.queries AS q
-        ON
-            dqw.query = q.query
+        ON dqw.query = q.query
     LEFT JOIN {schema}.documents_queries AS dq
-        ON
-            q.id = dq.query_id
-            AND dqw.document_id = dq.document_id
+        ON q.id = dq.query_id
+        AND dqw.document_id = dq.document_id
 )
 
 SELECT DISTINCT

@@ -1,11 +1,11 @@
-PRAGMA create_fts_index(
+PRAGMA CREATE_FTS_INDEX(
     '{schema}._queries', 
     'query', 
     'query', 
-    stemmer='{stemmer}', 
-    stopwords='{stopwords}', 
-    ignore='{ignore}',
-    strip_accents={strip_accents}, 
-    lower={lower},
-    overwrite=1
+    STEMMER='{stemmer}', 
+    STOPWORDS='{stopwords}', 
+    IGNORE='{ignore}',
+    STRIP_ACCENTS={strip_accents}, 
+    LOWER={lower},
+    OVERWRITE=1
 );

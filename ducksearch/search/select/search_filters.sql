@@ -16,20 +16,20 @@ _matchs AS (
         query,
         UNNEST(
             s.list_docids[:{top_k_token}]
-        ) as bm25id,
+        ) AS bm25id,
         UNNEST(
             s.list_scores[:{top_k_token}]
-        ) as score
+        ) AS score
     FROM _input_queries iq
-    INNER JOIN {schema}.scores  s
+    INNER JOIN {schema}.scores s
         ON iq.term = s.term
 ),
 
 _matchs_scores AS (
     SELECT 
-        query as _query,
+        query AS _query,
         bm25id,
-        sum(score) as _score
+        SUM(score) AS _score
     FROM _matchs
     GROUP BY 1, 2
 ),
@@ -48,9 +48,9 @@ _filtered_scores AS (
 _partition_scores AS (
     SELECT
         _query,
-        _score as score,
+        _score AS score,
         * EXCLUDE (_score, _query),
-        ROW_NUMBER() OVER (PARTITION BY _query ORDER BY _score DESC) as rank
+        ROW_NUMBER() OVER (PARTITION BY _query ORDER BY _score DESC) AS rank
     FROM _filtered_scores
 )
 

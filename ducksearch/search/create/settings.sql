@@ -7,4 +7,3 @@ CREATE TABLE IF NOT EXISTS {schema}.settings (
     strip_accents INT,
     lower INT
 );
-

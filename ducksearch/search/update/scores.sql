@@ -12,9 +12,9 @@ _unfiltered_terms_df AS (
         sw.sw IS NOT NULL AS is_stopword
     FROM {schema}.dict d
     INNER JOIN _terms t
-    ON d.termid = t.termid
+        ON d.termid = t.termid
     LEFT JOIN {schema}.stopwords sw
-    ON d.term = sw.sw
+        ON d.term = sw.sw
 ),
 
 _terms_df AS (
@@ -40,7 +40,7 @@ _documents_terms_df AS (
         s.tf
     FROM {schema}.terms s
     INNER JOIN _terms t
-    ON s.termid = t.termid
+        ON s.termid = t.termid
 ),
 
 _scores AS (
@@ -82,8 +82,4 @@ SELECT
     ls.list_scores
 FROM _list_scores ls
 JOIN _terms_df d
-ON ls.termid = d.termid;
-
-
-
-
+    ON ls.termid = d.termid;

@@ -1,6 +1,6 @@
 INSERT INTO {schema}.dict (term, df)
 
-WITH new_terms AS (
+WITH _new_terms AS (
     SELECT 
         fts.df,
         fts.term,
@@ -13,5 +13,5 @@ WITH new_terms AS (
 SELECT
     term,
     df
-FROM new_terms
+FROM _new_terms
 WHERE existing_id IS NULL;
