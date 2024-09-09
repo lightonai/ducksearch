@@ -79,7 +79,7 @@ upload.documents(
 
 ## Search
 
-We can search documents using the `search.documents` function. The function returns the documents that match the query, sorted by the BM25 score. The `top_k` parameter controls the number of documents to return, and the `top_k_token` parameter controls the number of documents to score for each query token. Increasing `top_k_token` can improve the quality of the results but also increase the computation time.
+We can search documents using the `search.documents` function. The function returns the documents that match the query, sorted by the BM25 score. The `top_k` parameter controls the number of documents to return. We can also filter the results using SQL syntax which will be evaluated by DuckDB, therefore all DuckDB functions are available.
 
 ```python
 from ducksearch import search
@@ -88,7 +88,7 @@ search.documents(
     database="ducksearch.duckdb",
     queries=["punk", "california"],
     top_k=10,
-    top_k_token=10_000,
+    filters="YEAR(date) >= 1970 AND popularity > 8",
 )
 ```
 
@@ -114,35 +114,6 @@ search.documents(
             "score": 0.156318798661232,
         }
     ],
-]
-```
-
-### Filters
-
-We can also filter the results using SQL syntax which will be evaluated by DuckDB, therefore all DuckDB functions are available.
-
-```python
-from ducksearch import search
-
-search.documents(
-    database="ducksearch.duckdb",
-    queries="rock",
-    top_k=10,
-    top_k_token=10_000,
-    filters="YEAR(date) < 1970 AND popularity > 9 AND style LIKE '%rock%'",
-)
-```
-
-```python
-[
-    {
-        "score": 0.08725740015506744,
-        "id": "1",
-        "title": "Here Comes the Sun",
-        "style": "rock",
-        "date": Timestamp("1969-06-10 00:00:00"),
-        "popularity": 10,
-    }
 ]
 ```
 
