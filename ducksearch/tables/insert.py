@@ -247,6 +247,9 @@ def insert_queries(
         config=config,
     )
 
+    if os.path.exists("_queries.parquet"):
+        os.remove("_queries.parquet")
+
 
 @execute_with_duckdb(
     relative_path="tables/insert/documents_queries.sql",
@@ -339,4 +342,4 @@ def insert_documents_queries(
     )
 
     if os.path.exists("_documents_queries.parquet"):
-        os.remove("_queries.parquet")
+        os.remove("_documents_queries.parquet")

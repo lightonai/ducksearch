@@ -1,3 +1,5 @@
+import os
+
 import pyarrow as pa
 import pyarrow.parquet as pq
 
@@ -84,6 +86,9 @@ def documents(
         parquet_file="_documents_ids.parquet",
         config=config,
     )
+
+    if os.path.exists("_documents_ids.parquet"):
+        os.remove("_documents_ids.parquet")
 
     # Plot the current state of the tables after deletion
     return plot(

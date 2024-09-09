@@ -324,6 +324,9 @@ def search(
         config=config,
     )
 
+    if os.path.exists("_queries.parquet"):
+        os.remove("_queries.parquet")
+
     _create_queries_index(
         database=database,
         schema=schema,

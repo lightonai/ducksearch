@@ -244,6 +244,9 @@ def update_index(
             )
             stopwords = f"{bm25_schema}.stopwords"
 
+            if os.path.exists("_stopwords.parquet"):
+                os.remove("_stopwords.parquet")
+
         _create_settings(database=database, schema=bm25_schema, config=config)
         _insert_settings(
             database=database,

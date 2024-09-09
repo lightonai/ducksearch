@@ -184,6 +184,9 @@ def graphs(
         config=config,
     )
 
+    if os.path.exists("_queries.parquet"):
+        os.remove("_queries.parquet")
+
     settings = _select_settings(
         database=database, schema="bm25_documents", config=config
     )[0]
