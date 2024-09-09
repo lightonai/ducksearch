@@ -1,0 +1,7 @@
+title: Documentation
+nav:
+    - Upload: upload.md
+    - Search: search.md
+    - Delete: delete.md
+    - Update: update.md
+

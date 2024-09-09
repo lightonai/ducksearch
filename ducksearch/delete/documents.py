@@ -16,7 +16,7 @@ def _drop_documents() -> None:
 
 def documents(
     database: str,
-    keys: list[str],
+    ids: list[str],
     schema: str = "bm25_tables",
     config: dict | None = None,
 ) -> None:
@@ -29,7 +29,7 @@ def documents(
     keys
         A list of document IDs to delete.
     schema
-        The schema where the documents table is located. Default is 'bm25_tables'.
+        The schema where the documents table is located.
     config
         Optional configuration options for the DuckDB connection.
 
@@ -61,7 +61,7 @@ def documents(
 
     >>> delete.documents(
     ...    database="test.duckdb",
-    ...    keys=[1, 2],
+    ...    ids=[1, 2],
     ... )
     | Table          | Size |
     |----------------|------|
@@ -70,7 +70,7 @@ def documents(
 
     """
     # Convert the list of document keys into a pyarrow Table for deletion
-    documents_ids = pa.Table.from_pydict({"id": keys})
+    documents_ids = pa.Table.from_pydict({"id": ids})
 
     # Write the document IDs to a parquet file for deletion
     pq.write_table(

@@ -63,13 +63,13 @@ def documents(
     queries
         A string or list of query strings to search for.
     batch_size
-        The batch size for query processing. Default is 30.
+        The batch size for query processing.
     top_k
-        The number of top documents to retrieve for each query. Default is 10.
+        The number of top documents to retrieve for each query.
     top_k_token
-        The number of documents to score per token. Default is 10,000.
+        The number of documents to score per token.
     n_jobs
-        The number of parallel jobs to use. Default is -1 (use all available processors).
+        The number of parallel jobs to use. Default use all available processors.
     config
         Optional configuration for DuckDB connection settings.
     filters
@@ -124,13 +124,13 @@ def queries(
     queries
         A string or list of query strings to search for.
     batch_size
-        The batch size for query processing. Default is 30.
+        The batch size for query processing.
     top_k
-        The number of top matching queries to retrieve. Default is 10.
+        The number of top matching queries to retrieve.
     top_k_token
-        The number of documents to score per token. Default is 10,000.
+        The number of documents to score per token.
     n_jobs
-        The number of parallel jobs to use. Default is -1 (use all available processors).
+        The number of parallel jobs to use. Default use all available processors.
     config
         Optional configuration for DuckDB connection settings.
     filters
@@ -196,7 +196,7 @@ def _search(
     top_k
         The number of top results to retrieve for each query.
     top_k_token
-        The number of documents to score per token. Default is 10,000.
+        The number of documents to score per token.
     index
         The index of the current query batch.
     config
@@ -264,13 +264,13 @@ def search(
     queries
         A string or list of query strings to search for.
     batch_size
-        The batch size for query processing. Default is 30.
+        The batch size for query processing.
     top_k
-        The number of top results to retrieve for each query. Default is 10.
+        The number of top results to retrieve for each query.
     top_k_token
-        The number of documents to score per token. Default is 10,000.
+        The number of documents to score per token.
     n_jobs
-        The number of parallel jobs to use. Default is -1 (use all available processors).
+        The number of parallel jobs to use. Default use available processors.
     config
         Optional configuration for DuckDB connection settings.
     filters

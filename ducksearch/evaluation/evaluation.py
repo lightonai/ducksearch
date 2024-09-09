@@ -12,7 +12,7 @@ def load_beir(dataset_name: str, split: str = "test") -> tuple[list, list, dict]
     dataset_name
         The name of the dataset to load (e.g., 'scifact').
     split
-        The dataset split to load (e.g., 'test'). Default is 'test'.
+        The dataset split to load (e.g., 'test').
 
     Returns
     -------

@@ -28,7 +28,6 @@ dev = [
     "numpydoc == 1.8.0",
 ]
 
-
 setuptools.setup(
     name="ducksearch",
     version=f"{__version__}",
@@ -50,4 +49,9 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires=">=3.8",
+    include_package_data=True,  # Ensure package data is included
+    package_data={
+        # Include all .sql files inside the 'ducksearch' package
+        "ducksearch": ["**/*.sql"],
+    },
 )

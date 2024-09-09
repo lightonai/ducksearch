@@ -3,7 +3,7 @@
   <p>Efficient BM25 with DuckDB 🦆</p>
 </div>
 
-<p align="center"><img width=500 src="docs/img/logo.png"/></p>
+<p align="center"><img width=500 src="img/logo.png"/></p>
 
 <div align="center">
   <!-- Documentation -->
@@ -181,11 +181,13 @@ search.documents(
     database="fineweb.duckdb",
     queries="earth science",
     top_k=2,
+    top_k_token=10_000,
     filters="token_count > 200",
 )
 ```
 
 ```python
+
 [
     {
         "id": "<urn:uuid:1e6ae53b-e0d7-431b-8d46-290244e597e9>",
@@ -251,7 +253,6 @@ upload.documents(
     },
 )
 
-# Mapping between documents ids and queries
 documents_queries = {
     0: ["the beatles", "rock band"],
     1: ["rock band", "california"],
@@ -267,6 +268,7 @@ search.graphs(
 	database="ducksearch.duckdb",
 	queries="daft punk",
 	top_k=10,
+	top_k_token=10_000,
 )
 ```
 

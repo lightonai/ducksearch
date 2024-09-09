@@ -13,9 +13,9 @@ def batchify(
     batch_size
         The number of items in each batch.
     desc
-        A description to display in the progress bar. Default is an empty string.
+        A description to display in the progress bar.
     tqdm_bar
-        Whether to display a progress bar using `tqdm`. Default is True.
+        Whether to display a progress bar using `tqdm`.
 
     Yields
     ------

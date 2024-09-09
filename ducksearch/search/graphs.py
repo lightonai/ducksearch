@@ -112,13 +112,13 @@ def graphs(
     queries
         A string or list of query strings to search for.
     batch_size
-        The batch size for processing queries. Default is 30.
+        The batch size for processing queries.
     top_k
-        The number of top documents to retrieve for each query. Default is 1000.
+        The number of top documents to retrieve for each query.
     top_k_token
-        The number of top tokens to retrieve. Default is 10,000.
+        The number of top tokens to retrieve.
     n_jobs
-        The number of parallel jobs to use. Default is -1 (use all available processors).
+        The number of parallel jobs to use. Default use all available processors.
     config
         Optional configuration settings for the DuckDB connection.
     filters

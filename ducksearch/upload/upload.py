@@ -42,24 +42,24 @@ def documents(
     documents
         Documents to upload. Can be a list of dictionaries or a Hugging Face (HF) URL string pointing to a dataset.
     k1
-        BM25 k1 parameter, controls term saturation. Default is 1.5.
+        BM25 k1 parameter, controls term saturation.
     b
-        BM25 b parameter, controls document length normalization. Default is 0.75.
+        BM25 b parameter, controls document length normalization.
     stemmer
-        Stemming algorithm to use (e.g., 'porter'). Default is 'porter'. The type of stemmer to be used. One of 'arabic', 'basque',
+        Stemming algorithm to use (e.g., 'porter'). The type of stemmer to be used. One of 'arabic', 'basque',
         'catalan', 'danish', 'dutch', 'english', 'finnish', 'french', 'german', 'greek', 'hindi', 'hungarian', 'indonesian', 'irish', 'italian', 'lithuanian',
         'nepali', 'norwegian', 'porter', 'portuguese', 'romanian', 'russian', 'serbian', 'spanish', 'swedish',
         'tamil', 'turkish', or 'none' if no stemming is to be used.
     stopwords
-        List of stopwords to exclude from indexing. Default is 'english', but can be a custom list or a language string.
+        List of stopwords to exclude from indexing.  Can be a custom list or a language string.
     ignore
-        Regular expression pattern to ignore characters when indexing. Default is '(\\.|[^a-z])+' to ignore punctuation and non-alphabetic characters.
+        Regular expression pattern to ignore characters when indexing. Default ignore punctuation and non-alphabetic characters.
     strip_accents
-        Whether to remove accents from characters during indexing. Default is True.
+        Whether to remove accents from characters during indexing.
     batch_size
-        Number of documents to process per batch. Default is 30,000.
+        Number of documents to process per batch.
     n_jobs
-        Number of parallel jobs to use for uploading documents. Default is -1 (use all available processors).
+        Number of parallel jobs to use for uploading documents. Default use all available processors.
     config
         Optional configuration dictionary for the DuckDB connection and other settings.
 
@@ -163,22 +163,22 @@ def queries(
     documents_queries
         Dictionary mapping document IDs to a list of queries.
     k1
-        BM25 k1 parameter, controls term saturation. Default is 1.5.
+        BM25 k1 parameter, controls term saturation.
     b
-        BM25 b parameter, controls document length normalization. Default is 0.75.
+        BM25 b parameter, controls document length normalization.
     stemmer
-        Stemming algorithm to use (e.g., 'porter'). Default is 'porter'. The type of stemmer to be used. One of 'arabic', 'basque',
+        Stemming algorithm to use (e.g., 'porter'). The type of stemmer to be used. One of 'arabic', 'basque',
         'catalan', 'danish', 'dutch', 'english', 'finnish', 'french', 'german', 'greek', 'hindi', 'hungarian', 'indonesian', 'irish', 'italian', 'lithuanian',
         'nepali', 'norwegian', 'porter', 'portuguese', 'romanian', 'russian', 'serbian', 'spanish', 'swedish',
         'tamil', 'turkish', or 'none' if no stemming is to be used.
     stopwords
-        List of stopwords to exclude from indexing. Default is 'english', but can be a custom list or a language string.
+        List of stopwords to exclude from indexing. Default can be a custom list or a language string.
     ignore
-        Regular expression pattern to ignore characters when indexing. Default is to ignore punctuation and non-alphabetic characters.
+        Regular expression pattern to ignore characters when indexing. Default ignore punctuation and non-alphabetic characters.
     strip_accents
-        Whether to remove accents from characters during indexing. Default is True.
+        Whether to remove accents from characters during indexing.
     batch_size
-        Number of queries to process per batch. Default is 30,000.
+        Number of queries to process per batch.
     config
         Optional configuration dictionary for the DuckDB connection and other settings.
 

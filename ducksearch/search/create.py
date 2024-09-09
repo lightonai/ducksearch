@@ -176,23 +176,23 @@ def update_index(
     fields
         The fields to index for each document or query.
     k1
-        The BM25 k1 parameter, controls term saturation. Default is 1.5.
+        The BM25 k1 parameter, controls term saturation.
     b
-        The BM25 b parameter, controls document length normalization. Default is 0.75.
+        The BM25 b parameter, controls document length normalization.
     stemmer
-        The stemming algorithm to use (e.g., 'porter'). Default is 'porter'.
+        The stemming algorithm to use (e.g., 'porter').
     stopwords
         The list of stopwords to exclude from indexing. Can be a list or a string specifying the language (e.g., "english").
     ignore
         A regex pattern to ignore characters during tokenization. Default ignores punctuation and non-alphabetic characters.
     strip_accents
-        Whether to remove accents from characters during indexing. Default is True.
+        Whether to remove accents from characters during indexing.
     lower
-        Whether to convert text to lowercase during indexing. Default is True.
+        Whether to convert text to lowercase during indexing.
     config
         Optional configuration settings for the DuckDB connection.
     batch_size
-        The number of documents or queries to process per batch. Default is 10,000.
+        The number of documents or queries to process per batch.
 
     Examples
     --------
@@ -346,19 +346,19 @@ def update_index_documents(
     database
         The name of the DuckDB database.
     k1
-        The BM25 k1 parameter, controls term saturation. Default is 1.5.
+        The BM25 k1 parameter, controls term saturation.
     b
-        The BM25 b parameter, controls document length normalization. Default is 0.75.
+        The BM25 b parameter, controls document length normalization.
     stemmer
-        The stemming algorithm to use (e.g., 'porter'). Default is 'porter'.
+        The stemming algorithm to use (e.g., 'porter').
     stopwords
         The list of stopwords to exclude from indexing. Can be a list or a string specifying the language (e.g., "english").
     ignore
         A regex pattern to ignore characters during tokenization. Default ignores punctuation and non-alphabetic characters.
     strip_accents
-        Whether to remove accents from characters during indexing. Default is True.
+        Whether to remove accents from characters during indexing.
     batch_size
-        The number of documents to process per batch. Default is 10,000.
+        The number of documents to process per batch.
     config
         Optional configuration settings for the DuckDB connection.
 
@@ -423,19 +423,19 @@ def update_index_queries(
     database
         The name of the DuckDB database.
     k1
-        The BM25 k1 parameter, controls term saturation. Default is 1.5.
+        The BM25 k1 parameter, controls term saturation.
     b
-        The BM25 b parameter, controls document length normalization. Default is 0.75.
+        The BM25 b parameter, controls document length normalization.
     stemmer
-        The stemming algorithm to use (e.g., 'porter'). Default is 'porter'.
+        The stemming algorithm to use (e.g., 'porter').
     stopwords
         The list of stopwords to exclude from indexing. Can be a list or a string specifying the language (e.g., "english").
     ignore
         A regex pattern to ignore characters during tokenization. Default ignores punctuation and non-alphabetic characters.
     strip_accents
-        Whether to remove accents from characters during indexing. Default is True.
+        Whether to remove accents from characters during indexing.
     batch_size
-        The number of queries to process per batch. Default is 10,000.
+        The number of queries to process per batch.
     config
         Optional configuration settings for the DuckDB connection.
 

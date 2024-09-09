@@ -102,9 +102,9 @@ def insert_documents(
     dtypes
         Optional dictionary specifying the DuckDB type for each field. Defaults to 'VARCHAR' for all unspecified fields.
     batch_size
-        The number of documents to insert in each batch. Default is 30,000.
+        The number of documents to insert in each batch.
     n_jobs
-        Number of parallel jobs to use for inserting documents. Default is -1 (use all available processors).
+        Number of parallel jobs to use for inserting documents. Default use all available processors.
     config
         Optional configuration options for the DuckDB connection.
 
@@ -302,6 +302,7 @@ def insert_documents_queries(
     ...     schema="bm25_tables",
     ...     documents_queries=documents_queries
     ... )
+
     """
     create_queries(database=database, schema=schema, config=config)
 
@@ -321,7 +322,7 @@ def insert_documents_queries(
             document_queries = {query: 1.0 for query in document_queries}
 
         for query, score in document_queries.items():
-            document_ids.append(document_id)
+            document_ids.append(str(document_id))
             queries.append(query)
             scores.append(score)
 
