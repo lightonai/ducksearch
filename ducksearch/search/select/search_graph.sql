@@ -62,7 +62,7 @@ _documents_ranks AS (
         query,
         id,
         score,
-        ROW_NUMBER() OVER (PARTITION BY query ORDER BY score DESC) AS rank
+        ROW_NUMBER() OVER (PARTITION BY query ORDER BY score DESC) AS _row_number
     FROM _documents_scores
 ),
 
@@ -71,7 +71,7 @@ _queries_ranks AS (
         query,
         id,
         score,
-        ROW_NUMBER() OVER (PARTITION BY query ORDER BY score DESC) AS rank
+        ROW_NUMBER() OVER (PARTITION BY query ORDER BY score DESC) AS _row_number
     FROM _queries_scores
 ),
 
@@ -83,7 +83,7 @@ _bm25_documents AS (
     FROM _documents_ranks ps
     INNER JOIN {documents_schema}.docs AS ddocs
         ON ps.id = ddocs.docid
-    WHERE ps.rank <= {top_k}
+    WHERE ps._row_number <= {top_k}
 ),
 
 _bm25_queries AS (
@@ -94,7 +94,7 @@ _bm25_queries AS (
     FROM _queries_ranks ps
     INNER JOIN {queries_schema}.docs AS ddocs
         ON ps.id = ddocs.docid
-    WHERE ps.rank <= {top_k}
+    WHERE ps._row_number <= {top_k}
 ),
 
 _graph AS (
@@ -169,7 +169,7 @@ graph_scores AS (
     GROUP BY 1, 2, 3, 4, 5
 ),
 
-rank AS (
+_rank AS (
     SELECT
         src_id AS id,
         _query,
@@ -198,7 +198,7 @@ scores AS (
         id,
         _query,
         MAX(score) AS score
-    FROM rank
+    FROM _rank
     GROUP BY 1, 2
 )
 
