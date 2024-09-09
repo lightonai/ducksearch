@@ -8,9 +8,9 @@ with open(file="README.md", mode="r", encoding="utf-8") as fh:
 base_packages = [
     "pandas >= 2.2.1",
     "duckdb == 1.0.0",
-    "lenlp == 1.1.1",
     "pyarrow >= 16.1.0",
     "tqdm >= 4.66.4",
+    "joblib >= 1.4.2",
 ]
 
 eval = ["ranx >= 0.3.16", "beir >= 2.0.0"]
@@ -20,6 +20,7 @@ dev = [
     "ruff >= 0.4.9",
     "pytest-cov >= 5.0.0",
     "pytest >= 8.2.1",
+    "harlequin >= 1.24.0",
 ]
 
 
