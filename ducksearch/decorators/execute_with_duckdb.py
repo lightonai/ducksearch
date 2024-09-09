@@ -2,7 +2,6 @@ import pathlib
 from functools import wraps
 
 import duckdb
-import pandas as pd
 
 
 def connect_to_duckdb(
@@ -20,7 +19,6 @@ def connect_to_duckdb(
 
 def execute_with_duckdb(
     relative_path: str | list[str],
-    df_name: str | None = None,
     read_only: bool = False,
     fields: list[str] | None = None,
     fetch_df: bool = False,
@@ -34,23 +32,11 @@ def execute_with_duckdb(
             *args,
             database: str,
             config: dict | None = None,
-            df: pd.DataFrame = None,
+            df: list[dict] = None,
             relative_path: str | list[str] = relative_path,
             **kwargs,
         ):
             """Connect to the database and execute the query."""
-            # Ensure a DataFrame and table name consistency
-            if df is not None:
-                assert df_name is not None, "Table name must be provided."
-                assert (
-                    read_only is False
-                ), "Read-only mode is not supported for writing."
-
-            if df_name is not None:
-                assert df is not None, "DataFrame must be provided."
-                assert (
-                    read_only is False
-                ), "Read-only mode is not supported for writing."
 
             # Open the DuckDB connection
             conn = connect_to_duckdb(
@@ -61,9 +47,6 @@ def execute_with_duckdb(
                 relative_path = [relative_path]
 
             try:
-                if df is not None and df_name is not None:
-                    conn.register(df_name, df)
-
                 # Execute the SQL query
                 for path in relative_path:
                     # Get the directory of the current file (the file where this decorator is used)

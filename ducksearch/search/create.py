@@ -1,13 +1,12 @@
+import logging
 import os
-import shutil
 
 import pyarrow as pa
 import pyarrow.parquet as pq
-from lenlp import counter
-from tqdm import tqdm
 
 from ..decorators import execute_with_duckdb
 from ..tables import select_documents_columns
+from ..utils import batchify
 
 
 @execute_with_duckdb(
@@ -18,74 +17,147 @@ def _create_tables() -> None:
 
 
 @execute_with_duckdb(
-    relative_path="search/select/count_documents_to_index.sql",
+    relative_path="search/select/settings_exists.sql",
+    fetch_df=True,
+)
+def _settings_exists() -> None:
+    """Check if the settings exist."""
+
+
+@execute_with_duckdb(
+    relative_path="search/create/settings.sql",
+)
+def _create_settings() -> None:
+    """Check if the settings exist."""
+
+
+@execute_with_duckdb(
+    relative_path="search/insert/settings.sql",
+)
+def _insert_settings() -> None:
+    """Check if the settings exist."""
+
+
+@execute_with_duckdb(
+    relative_path="search/create/stopwords.sql",
+)
+def _insert_stopwords() -> None:
+    """Check if the settings exist."""
+
+
+@execute_with_duckdb(
+    relative_path="search/select/settings.sql",
     read_only=True,
     fetch_df=True,
 )
-def _count_documents_to_index() -> list:
-    """Count the number of documents to index."""
+def _select_settings() -> None:
+    """Check if the settings exist."""
 
 
 @execute_with_duckdb(
-    relative_path="search/select/get_documents_to_index.sql",
+    relative_path="search/create/index.sql",
+)
+def _create_index() -> None:
+    """Parse documents tokens."""
+
+
+@execute_with_duckdb(
+    relative_path=[
+        "search/update/dict.sql",
+        "search/insert/dict.sql",
+    ],
+)
+def _update_dict() -> None:
+    """Parse documents tokens."""
+
+
+@execute_with_duckdb(
+    relative_path=[
+        "search/insert/docs.sql",
+    ],
+)
+def _update_docs() -> None:
+    """Parse documents tokens."""
+
+
+@execute_with_duckdb(
+    relative_path=[
+        "search/update/stats.sql",
+    ],
+)
+def _update_stats() -> None:
+    """Parse documents tokens."""
+
+
+@execute_with_duckdb(
+    relative_path="search/insert/terms.sql",
+)
+def _update_terms() -> None:
+    """Parse documents tokens."""
+
+
+@execute_with_duckdb(
+    relative_path="search/select/termids_to_score.sql",
     read_only=True,
     fetch_df=True,
 )
-def _get_documents_to_index() -> list:
-    """Get the documents to index."""
+def _termids_to_score() -> None:
+    """Parse documents tokens."""
 
 
 @execute_with_duckdb(
-    relative_path="search/create/count.sql",
+    relative_path="search/select/stats.sql",
     fetch_df=True,
+    read_only=True,
 )
-def _count_missing_documents():
-    """Count the documents not in index."""
-
-
-@execute_with_duckdb(
-    relative_path="search/insert/documents.sql",
-)
-def _insert_documents() -> None:
-    """Create the search index."""
-
-
-@execute_with_duckdb(
-    relative_path="search/insert/documents_lengths.sql",
-)
-def _insert_documents_lengths() -> None:
-    """Create the search index."""
+def _stats():
+    """Update the search index."""
 
 
 @execute_with_duckdb(
     relative_path="search/update/scores.sql",
 )
-def _update_scores():
+def _update_scores() -> None:
     """Update the search index."""
 
 
 @execute_with_duckdb(
-    relative_path="search/select/count_documents_indexed.sql",
-    read_only=True,
-    fetch_df=True,
+    relative_path="search/drop/schema.sql",
 )
-def _count_documents_indexed():
-    """Count the number of documents indexed."""
+def _drop_schema() -> None:
+    """Drop the schema."""
 
 
-def _update_index(
+@execute_with_duckdb(
+    relative_path="search/drop/_documents.sql",
+)
+def _drop_documents() -> None:
+    """Drop the schema."""
+
+
+@execute_with_duckdb(
+    relative_path="search/update/bm25id.sql",
+)
+def _update_bm25id() -> None:
+    """Update the search index."""
+
+
+def update_index(
     database: str,
-    schema: str,
+    bm25_schema: str,
+    source_schema: str,
     source: str,
+    key: str,
     fields: str,
-    ngram_range=(1, 1),
-    analyzer: str = "word",
-    normalize: bool = True,
-    b: float = 0.75,
     k1: float = 1.5,
+    b: float = 0.75,
+    stemmer: str = "porter",
+    stopwords: str | list[str] = "english",
+    ignore: str = "(\\.|[^a-z])+",
+    strip_accents: bool = True,
+    lower: bool = True,
     config: dict | None = None,
     batch_size: int = 10_000,
-    desc: str = "documents indexed",
 ) -> None:
     """Create the search index.
 
@@ -111,139 +183,195 @@ def _update_index(
         Configuration options for the DuckDB connection.
 
     """
+    if isinstance(fields, list):
+        fields = ", ".join([f"{field}" for field in fields])
 
-    _create_tables(database=database, schema=schema, config=config)
-
-    count = _count_documents_to_index(
+    _create_tables(
         database=database,
+        schema=bm25_schema,
+        source_schema=source_schema,
         source=source,
-        schema=schema,
+        key_field=key,
+        fields=fields,
         config=config,
-    )[0]["count"]
+    )
 
-    if count == 0:
-        return "All documents are indexed."
+    settings_exists = _settings_exists(
+        database=database,
+        schema=bm25_schema,
+        config=config,
+    )[0]["table_exists"]
 
-    batch_size = max(min(batch_size, count), 1)
-    steps = max(count // batch_size, 1)
+    if not settings_exists:
+        if not isinstance(stopwords, str):
+            stopwords_table = pa.Table.from_pydict(
+                {
+                    "sw": stopwords,
+                }
+            )
 
-    bar = tqdm(total=steps, desc="Updating index", position=0, leave=True)
+            pq.write_table(
+                table=stopwords_table,
+                where="_stopwords.parquet",
+                compression="snappy",
+            )
 
-    folder = os.path.join(".", "duckdb_tmp")
-    index_path = os.path.join(".", "duckdb_tmp", "index")
-    length_path = os.path.join(".", "duckdb_tmp", "length")
+            _insert_stopwords(
+                database=database,
+                schema=bm25_schema,
+                parquet_file="_stopwords.parquet",
+                config=config,
+            )
 
-    if os.path.exists(path=folder):
-        shutil.rmtree(folder)
+            stopwords = f"{bm25_schema}.stopwords"
 
-    os.makedirs(name=index_path, exist_ok=True)
-    os.makedirs(name=length_path, exist_ok=True)
-
-    index = 0
-
-    while True:
-        data = _get_documents_to_index(
+        _create_settings(
             database=database,
-            schema=schema,
-            source=source,
-            fields=fields,
-            batch_size=batch_size,
+            schema=bm25_schema,
             config=config,
         )
 
-        if len(data) == 0:
-            break
-
-        corpus_tokens = counter.count(
-            [row["_search"] for row in data],
-            ngram_range=ngram_range,
-            analyzer=analyzer,
-            normalize=normalize,
+        _insert_settings(
+            database=database,
+            schema=bm25_schema,
+            k1=k1,
+            b=b,
+            stemmer=stemmer,
+            stopwords=stopwords,
+            ignore=ignore,
+            strip_accents=strip_accents,
+            lower=lower,
+            config=config,
         )
 
-        document_ids, tokens, tfs = [], [], []
-        document_ids_lengths, document_lengths = [], []
-        for step, (document_id, document_tokens) in enumerate(
-            iterable=zip([row["id"] for row in data], corpus_tokens)
-        ):
-            document_ids_lengths.append(document_id)
-            document_lengths.append(len(document_tokens))
-            for token, frequency in document_tokens.items():
-                document_ids.append(document_id)
-                tokens.append(token)
-                tfs.append(frequency)
+    settings = _select_settings(
+        database=database,
+        schema=bm25_schema,
+        config=config,
+    )[0]
 
-        index_table = pa.Table.from_pydict(
-            {
-                "id": document_ids,
-                "token": tokens,
-                "tf": tfs,
-            }
+    if (
+        settings["k1"] != k1
+        or settings["b"] != b
+        or settings["stemmer"] != stemmer
+        or settings["stopwords"] != stopwords
+        or settings["ignore"] != ignore
+        or settings["strip_accents"] != int(strip_accents)
+        or settings["lower"] != int(lower)
+    ):
+        logging.warning(
+            f"Original settings are different from the selected settings. Settings used: {settings}"
         )
 
-        document_lengths_table = pa.Table.from_pydict(
+    logging.info(msg="Parsing documents tokens.")
+    _create_index(
+        database=database,
+        schema=bm25_schema,
+        **settings,
+        config=config,
+    )
+
+    logging.info(msg="Updating index metadata.")
+    _update_dict(
+        database=database,
+        schema=bm25_schema,
+        config=config,
+    )
+
+    _update_docs(
+        database=database,
+        schema=bm25_schema,
+        config=config,
+    )
+
+    _update_stats(
+        database=database,
+        schema=bm25_schema,
+        config=config,
+    )
+
+    _update_terms(
+        database=database,
+        schema=bm25_schema,
+        config=config,
+    )
+
+    termids_to_score = _termids_to_score(
+        database=database,
+        schema=bm25_schema,
+        config=config,
+        max_df=100_000,
+    )
+
+    stats = _stats(
+        database=database,
+        schema=bm25_schema,
+        config=config,
+    )
+
+    num_docs = stats[0]["num_docs"]
+    avgdl = stats[0]["avgdl"]
+
+    for batch in batchify(
+        X=termids_to_score,
+        batch_size=batch_size,
+        desc="Indexing",
+    ):
+        termids = pa.Table.from_pydict(
             {
-                "id": document_ids_lengths,
-                "document_length": document_lengths,
+                "termid": [term["termid"] for term in batch],
             }
         )
 
         pq.write_table(
-            index_table,
-            os.path.join(index_path, f"{index}.parquet"),
+            table=termids,
+            where="_termids.parquet",
             compression="snappy",
         )
 
-        pq.write_table(
-            document_lengths_table,
-            os.path.join(length_path, f"{index}.parquet"),
-            compression="snappy",
-        )
-
-        _insert_documents_lengths(
+        _update_scores(
             database=database,
-            schema=schema,
-            parquet_files=os.path.join(length_path, f"{index}.parquet"),
+            schema=bm25_schema,
+            num_docs=num_docs,
+            avgdl=avgdl,
+            parquet_file="_termids.parquet",
+            k1=settings["k1"],
+            b=settings["b"],
             config=config,
         )
 
-        index += 1
-        bar.update()
-
-    bar.close()
-
-    _insert_documents(
+    _drop_schema(
         database=database,
-        schema=schema,
-        parquet_files=os.path.join(index_path, "*.parquet"),
+        schema=bm25_schema,
         config=config,
     )
 
-    if os.path.exists(path=folder):
-        shutil.rmtree(folder)
-
-    _update_scores(
+    _drop_documents(
         database=database,
-        schema=schema,
-        b=b,
-        k1=k1,
+        schema=bm25_schema,
         config=config,
     )
 
-    count_documents_indexed = _count_documents_indexed(
-        database=database, schema=schema, config=config
-    )[0]["count"]
+    _update_bm25id(
+        database=database,
+        schema=bm25_schema,
+        source_schema=source_schema,
+        source=source,
+        config=config,
+    )
 
-    return f"{count_documents_indexed} {desc}."
+    if os.path.exists("_termids.parquet"):
+        os.remove(path="_termids.parquet")
 
 
 def update_index_documents(
     database: str,
-    ngram_range=(1, 1),
-    analyzer: str = "word",
-    normalize: bool = True,
-    b: float = 0.75,
     k1: float = 1.5,
+    b: float = 0.75,
+    stemmer: str = "porter",
+    stopwords: str | list[str] = "english",
+    ignore: str = "(\\.|[^a-z])+",
+    strip_accents: bool = True,
     batch_size: int = 10_000,
     config: dict | None = None,
 ) -> None:
@@ -259,6 +387,8 @@ def update_index_documents(
         The analyzer to use.
     normalize
         Whether to normalize the tokens.
+    stop_words
+        The list of stop words to drop. Default is `None`.
     b
         The impact of document length normalization.  Default is `0.75`, Higher will
         penalize longer documents more.
@@ -284,47 +414,49 @@ def update_index_documents(
     ...     key="id",
     ...     fields=["title", "text"],
     ...     documents=documents,
+    ...     stopwords=["larva"],
     ... )
-    | Table     | Size |
-    |-----------|------|
-    | documents | 5183 |
-
-    >>> search.update_index_documents(
-    ...     database="test.duckdb",
-    ... )
-    '5183 documents indexed.'
+    | Table          | Size |
+    |----------------|------|
+    | documents      | 5183 |
+    | bm25_documents | 5183 |
 
     """
     fields = ", ".join(
         [
-            f"s.{field}"
-            for field in select_documents_columns(database=database, config=config)
+            f"{field}"
+            for field in select_documents_columns(
+                database=database, schema="bm25_tables", config=config
+            )
         ]
     )
 
-    return _update_index(
+    return update_index(
         database=database,
-        schema="bm25_documents",
-        source="documents",
-        fields=fields,
-        ngram_range=ngram_range,
-        analyzer=analyzer,
-        normalize=normalize,
-        b=b,
         k1=k1,
+        b=b,
+        stemmer=stemmer,
+        stopwords=stopwords,
+        ignore=ignore,
+        strip_accents=strip_accents,
+        bm25_schema="bm25_documents",
+        source_schema="bm25_tables",
+        source="documents",
+        key="id",
+        fields=fields,
         config=config,
         batch_size=batch_size,
-        desc="documents indexed",
     )
 
 
 def update_index_queries(
     database: str,
-    ngram_range=(1, 1),
-    analyzer: str = "word",
-    normalize: bool = True,
-    b: float = 0.75,
     k1: float = 1.5,
+    b: float = 0.75,
+    stemmer: str = "porter",
+    stopwords: str | list[str] = "english",
+    ignore: str = "(\\.|[^a-z])+",
+    strip_accents: bool = True,
     batch_size: int = 10_000,
     config: dict | None = None,
 ) -> None:
@@ -340,6 +472,8 @@ def update_index_queries(
         The analyzer to use.
     normalize
         Whether to normalize the tokens.
+    stop_words
+        The list of stop words to drop. Default is `None`.
     b
         The impact of document length normalization.  Default is `0.75`, Higher will
         penalize longer documents more.
@@ -365,29 +499,28 @@ def update_index_queries(
     ...     queries=queries,
     ...     documents_queries=qrels,
     ... )
-    | Table          | Size |
-    |----------------|------|
-    | documents      | 5183 |
-    | queries        | 300  |
-    | bm25_documents | 5183 |
-
-    >>> search.update_index_queries(
-    ...     database="test.duckdb",
-    ... )
-    '300 queries indexed.'
+    | Table             | Size |
+    |-------------------|------|
+    | documents         | 5183 |
+    | queries           | 300  |
+    | bm25_documents    | 5183 |
+    | bm25_queries      | 300  |
+    | documents_queries | 339  |
 
     """
-    return _update_index(
+    return update_index(
         database=database,
-        schema="bm25_queries",
-        source="queries",
-        fields="s.query",
-        ngram_range=ngram_range,
-        analyzer=analyzer,
-        normalize=normalize,
-        b=b,
         k1=k1,
+        b=b,
+        stemmer=stemmer,
+        stopwords=stopwords,
+        ignore=ignore,
+        strip_accents=strip_accents,
+        bm25_schema="bm25_queries",
+        source_schema="bm25_tables",
+        source="queries",
+        key="id",
+        fields="query",
         config=config,
         batch_size=batch_size,
-        desc="queries indexed",
     )

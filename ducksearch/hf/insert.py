@@ -11,6 +11,7 @@ def _insert_documents() -> None:
 
 def insert_documents(
     database: str,
+    schema: str,
     key: str,
     fields: str | list[str],
     url: str,
@@ -27,26 +28,33 @@ def insert_documents(
 
     Examples
     --------
-    >>> from ducksearch import hf
+    >>> from ducksearch import upload
 
-    >>> hf.insert_documents(
+    >>> upload.documents(
     ...     database="test.duckdb",
-    ...     url="https://huggingface.co/datasets/Tevatron/scifact/resolve/main/test.jsonl.gz",
-    ...     fields=["query_id", "query"],
+    ...     documents="hf://datasets/lightonai/lighton-ms-marco-mini/train.parquet",
+    ...     fields=["document_ids", "scores"],
     ...     key="query_id",
     ... )
-    [(300,)]
+    | Table          | Size |
+    |----------------|------|
+    | documents      | 19   |
+    | bm25_documents | 19   |
 
     """
     if isinstance(fields, str):
         fields = [fields]
 
-    fields = ", ".join([field for field in fields if field != key and field != "id"])
+    fields = [field for field in fields if field != "id"]
+
+    if not fields:
+        fields.append(key)
 
     return _insert_documents(
         database=database,
+        schema=schema,
         url=url,
         key_field=key,
-        fields=fields,
+        fields=", ".join(fields),
         config=config,
     )

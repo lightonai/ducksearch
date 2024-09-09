@@ -17,6 +17,12 @@ tests:
 	pytest ducksearch/tables/select.py
 	rm -rf test.duckdb
 	rm -rf test.duckdb.wal
+	pytest ducksearch/hf/insert.py
+	rm -rf test.duckdb
+	rm -rf test.duckdb.wal
+	pytest ducksearch/delete/documents.py
+	rm -rf test.duckdb
+	rm -rf test.duckdb.wal
 	pytest ducksearch/evaluation/evaluation.py
 	rm -rf test.duckdb
 	rm -rf test.duckdb.wal
@@ -25,6 +31,9 @@ tests:
 	rm -rf test.duckdb.wal
 	pytest ducksearch/search/create.py
 	pytest ducksearch/search/select.py
+	rm -rf test.duckdb
+	rm -rf test.duckdb.wal
+	pytest ducksearch/search/graphs.py
 	rm -rf test.duckdb
 	rm -rf test.duckdb.wal
 

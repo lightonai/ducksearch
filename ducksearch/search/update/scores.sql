@@ -1,67 +1,89 @@
-WITH total_docs AS (
-    SELECT COUNT(*) AS N 
-    FROM {schema}.lengths
+INSERT INTO {schema}.scores (term, list_docids, list_scores)
+
+WITH _terms AS (
+    SELECT termid FROM parquet_scan('{parquet_file}')
 ),
 
-tokens_df AS (
+_unfiltered_terms_df AS (
     SELECT 
-        token_id,
-        COUNT(DISTINCT id) AS DF
-    FROM {schema}.tf
-    GROUP BY token_id
+        d.termid,
+        d.term,
+        d.df,
+        sw.sw IS NOT NULL AS is_stopword
+    FROM {schema}.dict d
+    INNER JOIN _terms t
+    ON d.termid = t.termid
+    LEFT JOIN {schema}.stopwords sw
+    ON d.term = sw.sw
 ),
 
-avg_document_length AS (
-    SELECT 
-        AVG(document_length) AS avg_document_length
-    FROM {schema}.lengths
+_terms_df AS (
+    SELECT
+        termid,
+        term,
+        df
+    FROM _unfiltered_terms_df
+    WHERE is_stopword = FALSE
 ),
 
-scores AS (
+_documents_lengths AS (
+    SELECT
+        docid,
+        len
+    FROM {schema}.docs
+),
+
+_documents_terms_df AS (
+    SELECT
+        s.docid,
+        s.termid,
+        s.tf
+    FROM {schema}.terms s
+    INNER JOIN _terms t
+    ON s.termid = t.termid
+),
+
+_scores AS (
     SELECT 
-        tf.id,
-        tf.token_id,
+        tf.docid,
+        tf.termid,
         tf.tf *
         LOG(
             (
-                (tdocs.n - tdf.df + 0.5) /
+                ({num_docs} - tdf.df + 0.5) /
                 (tdf.df + 0.5)
             ) + 1
         ) *
-        (1.0 / (tf.tf + {k1} * (1 - {b} + {b} * (dl.document_length / adl.avg_document_length)))) AS score
+        (1.0 / (tf.tf + {k1} * (1 - {b} + {b} * (dl.len / {avgdl})))) AS score
     FROM 
-        {schema}.tf tf
+        _documents_terms_df tf
+    JOIN
+        _documents_lengths dl ON dl.docid = tf.docid
     JOIN 
-        {schema}.lengths dl ON dl.id = tf.id
-    JOIN 
-        tokens_df tdf ON tdf.token_id = tf.token_id
-    CROSS JOIN 
-        total_docs tdocs
-    CROSS JOIN 
-        avg_document_length adl
+        _terms_df tdf ON tdf.termid = tf.termid
+),
+
+_list_scores AS (
+    SELECT
+        s.termid,
+        LIST(d.docid ORDER BY s.score DESC, s.docid ASC) AS list_docids,
+        LIST(s.score ORDER BY s.score DESC, s.docid ASC) AS list_scores
+    FROM _scores s
+    INNER JOIN
+        {schema}.docs d
+        ON s.docid = d.docid
+    GROUP BY
+        s.termid
 )
 
-UPDATE {schema}.tf AS tf
-SET score = s.score
-FROM scores s
-WHERE tf.id = s.id
-AND tf.token_id = s.token_id;
-
-DROP INDEX IF EXISTS {schema}_scores_index;
-
-CREATE OR REPLACE TABLE {schema}.scores AS (
-    SELECT 
-        t.token AS token,
-        LIST(tf.id ORDER BY tf.score DESC, tf.id ASC) AS list_ids,
-        LIST(tf.score ORDER BY tf.score DESC, tf.id ASC) AS list_scores
-    FROM 
-        {schema}.tf tf
-    INNER JOIN {schema}.tokens t 
-    ON tf.token_id = t.id
-    GROUP BY 
-        t.token
-    ORDER BY t.token ASC
-);
+SELECT
+    d.term,
+    ls.list_docids,
+    ls.list_scores
+FROM _list_scores ls
+JOIN _terms_df d
+ON ls.termid = d.termid;
 
 
-CREATE UNIQUE INDEX {schema}_scores_index ON {schema}.scores (token);
+
+

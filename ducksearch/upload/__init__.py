@@ -1,3 +1,3 @@
-from .upload import documents, indexes, queries
+from .upload import documents, queries
 
-__all__ = ["documents", "indexes", "queries"]
+__all__ = ["documents", "queries"]

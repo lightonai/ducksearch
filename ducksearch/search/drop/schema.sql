@@ -1,0 +1,1 @@
+DROP SCHEMA fts_{schema}__documents CASCADE;

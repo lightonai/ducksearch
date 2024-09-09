@@ -41,7 +41,15 @@ def _plot_queries_documents():
 
 
 def plot(
-    database: str, config: None | dict = None, tables=["documents", "queries"]
+    database: str,
+    config: None | dict = None,
+    tables=[
+        "bm25_tables.documents",
+        "bm25_tables.queries",
+        "bm25_documents.lengths",
+        "bm25_queries.lengths",
+        "bm25_tables.documents_queries",
+    ],
 ) -> str:
     """Plot statistics about the dataset.
 
@@ -68,6 +76,8 @@ def plot(
             continue
 
     data = {
-        table.replace(".lengths", ""): size for table, size in data.items() if size > 0
+        table.replace(".docs", "").replace("bm25_tables.", ""): size
+        for table, size in data.items()
+        if size > 0
     }
     return print(create_aligned_markdown_table(data=data))

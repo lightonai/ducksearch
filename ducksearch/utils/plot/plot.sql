@@ -1,3 +1,3 @@
-select count(distinct id) as '{table}'
+select count(*) as '{table}'
 from {table};
 

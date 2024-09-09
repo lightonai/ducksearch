@@ -1,3 +1,3 @@
 SELECT *
-FROM queries
+FROM {schema}.queries
 ORDER BY id ASC;

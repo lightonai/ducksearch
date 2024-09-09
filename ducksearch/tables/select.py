@@ -15,6 +15,7 @@ def select_documents() -> list[dict]:
 
     >>> documents = tables.select_documents(
     ...     database="test.duckdb",
+    ...     schema="bm25_tables",
     ... )
 
     >>> assert len(documents) == 3
@@ -35,7 +36,8 @@ def select_queries() -> list[dict]:
     >>> from ducksearch import tables
 
     >>> queries = tables.select_queries(
-    ...     database="test.duckdb"
+    ...     database="test.duckdb",
+    ...     schema="bm25_tables",
     ... )
 
     >>> assert len(queries) == 3
@@ -54,6 +56,7 @@ def select_columns() -> list[dict]:
 
 def select_documents_columns(
     database: str,
+    schema: str,
     config: dict | None = None,
 ) -> list[str]:
     """Select the columns from the documents table.
@@ -62,13 +65,17 @@ def select_documents_columns(
     --------
     >>> from ducksearch import tables
 
-    >>> tables.select_documents_columns(database="test.duckdb")
+    >>> tables.select_documents_columns(
+    ...     database="test.duckdb",
+    ...     schema="bm25_tables",
+    ... )
     ['id', 'title', 'text']
 
     """
     return [
         column["column"]
         for column in select_columns(
-            database=database, table_name="documents", config=config
+            database=database, schema=schema, table_name="documents", config=config
         )
+        if column["column"] != "bm25id"
     ]

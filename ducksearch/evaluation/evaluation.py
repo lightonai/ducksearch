@@ -16,7 +16,6 @@ def load_beir(dataset_name: str, split: str = "test") -> tuple[list, list, dict]
 
     Examples
     --------
-
     >>> documents, queries, qrels = load_beir("scifact", split="test")
 
     >>> len(documents)
@@ -96,11 +95,6 @@ def evaluate(
     ...     fields=["title", "text"],
     ...     documents=documents,
     ... )
-    | Table     | Size |
-    |-----------|------|
-    | documents | 5183 |
-
-    >>> upload.indexes(database="test.duckdb")
     | Table          | Size |
     |----------------|------|
     | documents      | 5183 |
@@ -119,9 +113,9 @@ def evaluate(
     ...     metrics=["ndcg@10", "hits@1", "hits@2", "hits@3", "hits@4", "hits@5", "hits@10"],
     ... )
 
-    >>> assert evaluation_scores["ndcg@10"] > 0.64
-    >>> assert evaluation_scores["hits@1"] > 0.51
-    >>> assert evaluation_scores["hits@10"] > 0.86
+    >>> assert evaluation_scores["ndcg@10"] > 0.68
+    >>> assert evaluation_scores["hits@1"] > 0.54
+    >>> assert evaluation_scores["hits@10"] > 0.90
 
     """
     from ranx import Qrels, Run, evaluate

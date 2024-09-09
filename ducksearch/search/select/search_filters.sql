@@ -1,59 +1,60 @@
-WITH input_queries AS (
+WITH _input_queries AS (
     SELECT
-        query, 
-        token,
-        tf
-    FROM read_parquet('{parquet_files}')
+        pf.query,
+        ftsdict.term
+    FROM parquet_scan('{parquet_file}') pf
+    JOIN fts_{schema}__queries.docs docs
+        ON pf.query = docs.name
+    JOIN fts_{schema}__queries.terms terms
+        ON docs.docid = terms.docid
+    JOIN fts_{schema}__queries.dict ftsdict
+        ON terms.termid = ftsdict.termid
 ),
 
-matchs AS (
+_matchs AS (
     SELECT
-        iq.query,
+        query,
         UNNEST(
-            s.list_ids[:{top_k_token}]
-        ) as id,
+            s.list_docids[:{top_k_token}]
+        ) as bm25id,
         UNNEST(
             s.list_scores[:{top_k_token}]
         ) as score
-    FROM input_queries iq
+    FROM _input_queries iq
     INNER JOIN {schema}.scores  s
-        ON iq.token = s.token
+        ON iq.term = s.term
 ),
 
-matchs_scores AS (
+_matchs_scores AS (
     SELECT 
         query as _query,
-        id as _id,
+        bm25id,
         sum(score) as _score
-    FROM matchs
+    FROM _matchs
     GROUP BY 1, 2
 ),
 
-filtered_scores AS (
+_filtered_scores AS (
     SELECT
         _query,
-        _id,
         _score,
-        s.* EXCLUDE (id)
-    FROM matchs_scores ms
-    LEFT JOIN {source} s
-        ON ms._id = s.id
+        s.* EXCLUDE (bm25id)
+    FROM _matchs_scores ms
+    JOIN {source_schema}.{source} s
+        ON ms.bm25id = s.bm25id
     WHERE {filters}
 ),
 
-partition_scores AS (
-
+_partition_scores AS (
     SELECT
         _query,
-        _id as id,
         _score as score,
-        * EXCLUDE (_id, _score, _query),
+        * EXCLUDE (_score, _query),
         ROW_NUMBER() OVER (PARTITION BY _query ORDER BY _score DESC) as rank
-    FROM filtered_scores
-
+    FROM _filtered_scores
 )
 
 SELECT 
     * EXCLUDE (rank)
-FROM partition_scores
+FROM _partition_scores
 WHERE rank <= {top_k};

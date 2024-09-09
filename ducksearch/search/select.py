@@ -1,22 +1,51 @@
 import collections
+import logging
 import os
-import shutil
 
 import pyarrow as pa
 import pyarrow.parquet as pq
-import tqdm
 from joblib import Parallel, delayed
-from lenlp import counter
 
 from ..decorators import execute_with_duckdb
+from ..utils import batchify
+from .create import _select_settings
+
+
+@execute_with_duckdb(
+    relative_path="search/create/queries_index.sql",
+)
+def _create_queries_index() -> None:
+    """Index the queries."""
+
+
+@execute_with_duckdb(
+    relative_path="search/insert/queries.sql",
+)
+def _insert_queries() -> None:
+    """Index the queries."""
+
+
+@execute_with_duckdb(
+    relative_path="search/select/search.sql",
+    read_only=True,
+    fetch_df=True,
+)
+def _search_query():
+    """Search in duckdb."""
+
+
+@execute_with_duckdb(
+    relative_path="search/select/search_filters.sql",
+    read_only=True,
+    fetch_df=True,
+)
+def _search_query_filters():
+    """Search in duckdb."""
 
 
 def documents(
     database: str,
     queries: str | list[str],
-    ngram_range=(1, 1),
-    analyzer: str = "word",
-    normalize: bool = True,
     batch_size: int = 30,
     top_k: int = 10,
     top_k_token: int = 10_000,
@@ -63,6 +92,7 @@ def documents(
     >>> scores = search.documents(
     ...     database="test.duckdb",
     ...     queries=queries,
+    ...     top_k_token=1000,
     ... )
 
     >>> evaluation_scores = evaluation.evaluate(
@@ -72,7 +102,7 @@ def documents(
     ...     metrics=["ndcg@10", "hits@1", "hits@2", "hits@3", "hits@4", "hits@5", "hits@10"],
     ... )
 
-    >>> assert evaluation_scores["ndcg@10"] > 0.65
+    >>> assert evaluation_scores["ndcg@10"] > 0.68
 
     >>> for sample_documents in scores:
     ...     for document in sample_documents:
@@ -95,11 +125,9 @@ def documents(
     return search(
         database=database,
         schema="bm25_documents",
+        source_schema="bm25_tables",
         source="documents",
         queries=queries,
-        ngram_range=ngram_range,
-        analyzer=analyzer,
-        normalize=normalize,
         config=config,
         batch_size=batch_size,
         top_k=top_k,
@@ -112,9 +140,6 @@ def documents(
 def queries(
     database: str,
     queries: str | list[str],
-    ngram_range=(1, 1),
-    analyzer: str = "word",
-    normalize: bool = True,
     batch_size: int = 30,
     top_k: int = 10,
     top_k_token: int = 10_000,
@@ -184,11 +209,9 @@ def queries(
     return search(
         database=database,
         schema="bm25_queries",
+        source_schema="bm25_tables",
         source="queries",
         queries=queries,
-        ngram_range=ngram_range,
-        analyzer=analyzer,
-        normalize=normalize,
         config=config,
         batch_size=batch_size,
         top_k=top_k,
@@ -198,49 +221,12 @@ def queries(
     )
 
 
-def batchify(
-    X: list[str], batch_size: int, desc: str = "", tqdm_bar: bool = True
-) -> list:
-    batchs = [X[pos : pos + batch_size] for pos in range(0, len(X), batch_size)]
-
-    if tqdm_bar:
-        for batch in tqdm.tqdm(
-            batchs,
-            position=0,
-            total=1 + len(X) // batch_size,
-            desc=desc,
-        ):
-            yield batch
-    else:
-        yield from batchs
-
-
-@execute_with_duckdb(
-    relative_path="search/select/search.sql",
-    read_only=True,
-    fetch_df=True,
-)
-def _search_query():
-    """Search in duckdb."""
-
-
-@execute_with_duckdb(
-    relative_path="search/select/search_filters.sql",
-    read_only=True,
-    fetch_df=True,
-)
-def _search_query_filters():
-    """Search in duckdb."""
-
-
 def _search(
     database: str,
     schema: str,
+    source_schema: str,
     source: str,
     queries: list[str],
-    ngram_range: tuple,
-    analyzer: str,
-    normalize: bool,
     top_k: int,
     top_k_token: int,
     index: int,
@@ -262,50 +248,34 @@ def _search(
         The index of the batch.
 
     """
-    queries_tokens = counter.count(
-        queries,
-        ngram_range=ngram_range,
-        analyzer=analyzer,
-        normalize=normalize,
-    )
-
-    queries_path = os.path.join(".", "duckdb_tmp", "queries", f"{index}.parquet")
-
-    queries_ids, tokens, tfs = [], [], []
-    for step, (query, document_tokens) in enumerate(
-        iterable=zip(queries, queries_tokens)
-    ):
-        for token, frequency in document_tokens.items():
-            queries_ids.append(query)
-            tokens.append(token)
-            tfs.append(frequency)
+    search_function = _search_query_filters if filters is not None else _search_query
 
     index_table = pa.Table.from_pydict(
         {
-            "query": queries_ids,
-            "token": tokens,
-            "tf": tfs,
+            "query": queries,
         }
     )
 
     pq.write_table(
         index_table,
-        queries_path,
+        f"_queries_{index}.parquet",
         compression="snappy",
     )
 
-    search_function = _search_query_filters if filters is not None else _search_query
-
     matchs = search_function(
         database=database,
-        parquet_files=queries_path,
         schema=schema,
+        source_schema=source_schema,
         source=source,
         top_k=top_k,
         top_k_token=top_k_token,
+        parquet_file=f"_queries_{index}.parquet",
         filters=filters,
         config=config,
     )
+
+    if os.path.exists(f"_queries_{index}.parquet"):
+        os.remove(f"_queries_{index}.parquet")
 
     candidates = collections.defaultdict(list)
     for match in matchs:
@@ -317,11 +287,9 @@ def _search(
 def search(
     database: str,
     schema: str,
+    source_schema: str,
     source: str,
     queries: str | list[str],
-    ngram_range=(1, 1),
-    analyzer: str = "word",
-    normalize: bool = True,
     batch_size: int = 30,
     top_k: int = 10,
     top_k_token: int = 10_000,
@@ -363,50 +331,75 @@ def search(
 
     >>> documents = search.search(
     ...     database="test.duckdb",
+    ...     source_schema="bm25_tables",
     ...     schema="bm25_documents",
     ...     source="documents",
-    ...     queries=["Random query"],
-    ...     top_k_token = 10_000,
-    ...     top_k = 10,
+    ...     queries="random query",
+    ...     top_k_token=10_000,
+    ...     top_k=10,
     ... )
 
-    >>> assert len(documents) == 1
-    >>> assert len(documents[0]) == 10
+    assert len(documents) == 1
+    assert len(documents[0]) == 10
 
 
     """
-    queries = queries if isinstance(queries, list) else [queries]
-    queries_path = os.path.join(".", "duckdb_tmp", "queries")
+    if isinstance(queries, str):
+        queries = [queries]
 
-    if os.path.exists(path=queries_path):
-        shutil.rmtree(queries_path)
+    logging.info("Indexing queries.")
+    index_table = pa.Table.from_pydict(
+        {
+            "query": queries,
+        }
+    )
 
-    os.makedirs(name=os.path.join(".", "duckdb_tmp"), exist_ok=True)
-    os.makedirs(name=queries_path, exist_ok=True)
+    settings = _select_settings(
+        database=database,
+        schema=schema,
+        config=config,
+    )[0]
+
+    pq.write_table(
+        index_table,
+        "_queries.parquet",
+        compression="snappy",
+    )
+
+    _insert_queries(
+        database=database,
+        schema=schema,
+        parquet_file="_queries.parquet",
+        config=config,
+    )
+
+    _create_queries_index(
+        database=database,
+        schema=schema,
+        **settings,
+        config=config,
+    )
 
     matchs = []
-    for match in Parallel(n_jobs=n_jobs, backend="threading")(
+    for match in Parallel(
+        n_jobs=1 if len(queries) <= batch_size else n_jobs, backend="threading"
+    )(
         delayed(function=_search)(
             database,
             schema,
+            source_schema,
             source,
             batch_queries,
-            ngram_range,
-            analyzer,
-            normalize,
             top_k,
             top_k_token,
             index,
             config,
-            filters,
+            filters=filters,
         )
         for index, batch_queries in enumerate(
-            iterable=batchify(X=queries, batch_size=batch_size, desc="Search.")
+            iterable=batchify(X=queries, batch_size=batch_size, desc="Searching")
         )
     ):
         matchs.extend(match)
-
-    if os.path.exists(path=queries_path):
-        shutil.rmtree(queries_path)
 
     return matchs

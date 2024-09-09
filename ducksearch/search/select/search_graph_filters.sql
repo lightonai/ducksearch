@@ -1,105 +1,113 @@
-WITH input_queries AS (
+WITH _input_queries AS (
     SELECT
-        query, 
-        token,
-        tf
-    FROM read_parquet('{parquet_files}')
+        pf.query,
+        ftsdict.term
+    FROM parquet_scan('{parquet_file}') pf
+    JOIN fts_{documents_schema}__queries.docs docs
+        ON pf.query = docs.name
+    JOIN fts_{documents_schema}__queries.terms terms
+        ON docs.docid = terms.docid
+    JOIN fts_{documents_schema}__queries.dict ftsdict
+        ON terms.termid = ftsdict.termid
 ),
 
-documents_matchs AS (
+_documents_matchs AS (
     SELECT
         iq.query,
         UNNEST(
-            s.list_ids[:{top_k_token}]
+            s.list_docids[:{top_k_token}]
         ) as id,
         UNNEST(
             s.list_scores[:{top_k_token}]
         ) as score
-    FROM input_queries iq
-    INNER JOIN bm25_documents.scores  s
-        ON iq.token = s.token
+    FROM _input_queries iq
+    INNER JOIN {documents_schema}.scores  s
+        ON iq.term = s.term
 ),
 
-queries_matchs AS (
+_queries_matchs AS (
     SELECT
         iq.query,
         UNNEST(
-            s.list_ids[:{top_k_token}]
+            s.list_docids[:{top_k_token}]
         ) as id,
         UNNEST(
             s.list_scores[:{top_k_token}]
         ) as score
-    FROM input_queries iq
-    INNER JOIN bm25_queries.scores  s
-        ON iq.token = s.token
+    FROM _input_queries iq
+    INNER JOIN {queries_schema}.scores  s
+        ON iq.term = s.term
 ),
 
-documents_scores_without_filter AS (
+_documents_scores AS (
     SELECT 
         query as _query,
         id as _id,
         sum(score) as _score
-    FROM documents_matchs
+    FROM _documents_matchs
     GROUP BY 1, 2
 ),
 
-documents_scores AS (
+_documents_scores_filter AS (
     SELECT 
-        dswf._query as query,
-        dswf._id as id,
-        dswf._score as score
-    FROM documents_scores_without_filter dswf
-    INNER JOIN documents d
-    ON documents_scores_without_filter._id = d.id
+        ds._query as query,
+        ds._id as id,
+        ds._score as score
+    FROM _documents_scores ds
+    INNER JOIN {source_schema}.documents d
+    ON ds._id = d.bm25id
     WHERE {filters}
 ),
 
-queries_scores AS (
+_queries_scores AS (
     SELECT 
         query,
         id,
         sum(score) as score
-    FROM queries_matchs
+    FROM _queries_matchs
     GROUP BY 1, 2
 ),
 
-documents_ranks AS (
+_documents_ranks AS (
     SELECT
         query,
         id,
         score,
         ROW_NUMBER() OVER (PARTITION BY query ORDER BY score DESC) as rank
-    FROM documents_scores
+    FROM _documents_scores_filter
 ),
 
-queries_ranks AS (
+_queries_ranks AS (
     SELECT
         query,
         id,
         score,
         ROW_NUMBER() OVER (PARTITION BY query ORDER BY score DESC) as rank
-    FROM queries_scores
+    FROM _queries_scores
     
 ),
 
-bm25_documents AS (
+_bm25_documents AS (
     SELECT
         ps.query as _query,
-        ps.id,
+        ddocs.name as id,
         ps.score
-    FROM documents_ranks ps
+    FROM _documents_ranks ps
+    INNER JOIN {documents_schema}.docs AS ddocs
+        ON ps.id = ddocs.docid
     WHERE ps.rank <= {top_k} 
 ),
 
 -- The following queries computes the BM25 scores for the queries.
 
-
-bm25_queries AS (
+_bm25_queries AS (
     SELECT
         ps.query as _query,
-        ps.id,
+        ddocs.name as id,
         ps.score
-    FROM queries_ranks ps
+    FROM _queries_ranks ps
+    INNER JOIN {queries_schema}.docs AS ddocs
+        ON ps.id = ddocs.docid
     WHERE ps.rank <= {top_k} 
 ),
 
@@ -112,10 +120,10 @@ _graph AS (
         'document' AS src_type,
         'query' AS dst_type,
         bm25._query
-    FROM bm25_documents AS bm25
-    INNER JOIN documents_queries_graph AS dqg
+    FROM _bm25_documents AS bm25
+    INNER JOIN {source_schema}.documents_queries AS dqg
         ON bm25.id = dqg.document_id
-    INNER JOIN bm25_queries AS bm25q
+    INNER JOIN _bm25_queries AS bm25q
         ON
             dqg.query_id = bm25q.id
             AND bm25._query = bm25q._query
@@ -127,7 +135,7 @@ _graph_scores AS (
         coalesce(bm25.score, 0) AS src_score,
         0 AS dst_score
     FROM _graph AS g
-    LEFT JOIN bm25_documents AS bm25
+    LEFT JOIN _bm25_documents AS bm25
         ON
             g.src_id = bm25.id
             AND g._query = bm25._query
@@ -138,7 +146,7 @@ _graph_scores AS (
         0 AS src_score,
         coalesce(bm25.score, 0) AS dst_score
     FROM _graph AS g
-    LEFT JOIN bm25_documents AS bm25
+    LEFT JOIN _bm25_documents AS bm25
         ON
             g.dst_id = bm25.id
             AND g._query = bm25._query
@@ -149,7 +157,7 @@ _graph_scores AS (
         coalesce(bm25.score, 0) AS src_score,
         0 AS dst_score
     FROM _graph AS g
-    LEFT JOIN bm25_queries AS bm25
+    LEFT JOIN _bm25_queries AS bm25
         ON
             g.src_id = bm25.id
             AND g._query = bm25._query
@@ -160,7 +168,7 @@ _graph_scores AS (
         0 AS src_score,
         coalesce(bm25.score, 0) AS dst_score
     FROM _graph AS g
-    LEFT JOIN bm25_queries AS bm25
+    LEFT JOIN _bm25_queries AS bm25
         ON
             g.dst_id = bm25.id
             AND g._query = bm25._query
@@ -181,7 +189,6 @@ graph_scores AS (
     GROUP BY 1, 2, 3, 4, 5
 ),
 
--- The following could be learned with ML.
 rank AS (
     SELECT
         src_id AS id,
@@ -203,7 +210,7 @@ rank AS (
         id,
         _query,
         score
-    FROM bm25_documents
+    FROM _bm25_documents
 ),
 
 scores AS (
@@ -216,6 +223,10 @@ scores AS (
 )
 
 SELECT
-    *
-FROM scores
-ORDER BY score DESC;
+    docs.*,
+    s.score,
+    s._query
+FROM scores s
+JOIN {source_schema}.documents docs
+    ON s.id = docs.id
+ORDER BY s.score DESC;

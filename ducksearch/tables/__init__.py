@@ -2,6 +2,7 @@ from .create import (
     create_documents,
     create_documents_queries,
     create_queries,
+    create_schema,
 )
 from .insert import (
     insert_documents,
@@ -18,6 +19,7 @@ __all__ = [
     "create_documents",
     "create_queries",
     "create_documents_queries",
+    "create_schema",
     "insert_documents",
     "insert_queries",
     "insert_documents_queries",

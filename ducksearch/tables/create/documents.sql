@@ -1,4 +1,5 @@
-CREATE TABLE IF NOT EXISTS documents (
+CREATE TABLE IF NOT EXISTS {schema}.documents (
     id VARCHAR PRIMARY KEY NOT NULL,
-    {fields}
+    {fields},
+    bm25id INT DEFAULT NULL
 );

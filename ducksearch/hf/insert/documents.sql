@@ -1,4 +1,4 @@
-CREATE OR REPLACE TABLE df_documents AS (
+INSERT INTO {schema}.documents (id, {fields}) (
     WITH hf_dataset AS (
         SELECT
         {key_field} AS id,
