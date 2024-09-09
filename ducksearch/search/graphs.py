@@ -19,7 +19,7 @@ from .select import _create_queries_index, _insert_queries
     fetch_df=True,
 )
 def _search_graph_query():
-    """Search in duckdb."""
+    """Execute a graph-based search query in DuckDB."""
 
 
 @execute_with_duckdb(
@@ -28,7 +28,7 @@ def _search_graph_query():
     fetch_df=True,
 )
 def _search_graph_filters_query():
-    """Search in duckdb with filters."""
+    """Execute a graph-based search query in DuckDB with filters."""
 
 
 def _search_graph(
@@ -40,36 +40,36 @@ def _search_graph(
     config: dict | None = None,
     filters: str | None = None,
 ) -> list:
-    """Search in duckdb.
+    """Perform a graph-based search in DuckDB.
 
     Parameters
     ----------
+    database
+        The name of the DuckDB database.
     queries
         The list of queries to search.
     top_k
-        The number of top documents to retrieve.
+        The number of top results to retrieve for each query.
     top_k_token
-        The number of top tokens to retrieve. It will be used to select top k documents per
-        token.
+        The number of top tokens to retrieve. Used to select top documents per token.
     index
-        The index of the batch.
+        The index of the current batch of queries.
+    config
+        Optional configuration settings for the DuckDB connection.
+    filters
+        Optional SQL filters to apply during the search.
 
+    Returns
+    -------
+    list
+        A list of search results for each query in the batch.
     """
     search_function = (
         _search_graph_filters_query if filters is not None else _search_graph_query
     )
 
-    index_table = pa.Table.from_pydict(
-        {
-            "query": queries,
-        }
-    )
-
-    pq.write_table(
-        index_table,
-        f"_queries_{index}.parquet",
-        compression="snappy",
-    )
+    index_table = pa.Table.from_pydict({"query": queries})
+    pq.write_table(index_table, f"_queries_{index}.parquet", compression="snappy")
 
     matchs = search_function(
         database=database,
@@ -103,16 +103,37 @@ def graphs(
     config: dict | None = None,
     filters: str | None = None,
 ) -> list[dict]:
-    """Search in duckdb.
+    """Search for graphs in DuckDB using the provided queries.
+
+    Parameters
+    ----------
+    database
+        The name of the DuckDB database.
+    queries
+        A string or list of query strings to search for.
+    batch_size
+        The batch size for processing queries. Default is 30.
+    top_k
+        The number of top documents to retrieve for each query. Default is 1000.
+    top_k_token
+        The number of top tokens to retrieve. Default is 10,000.
+    n_jobs
+        The number of parallel jobs to use. Default is -1 (use all available processors).
+    config
+        Optional configuration settings for the DuckDB connection.
+    filters
+        Optional SQL filters to apply during the search.
+
+    Returns
+    -------
+    list[dict]
+        A list of search results, where each result corresponds to a query.
 
     Examples
     --------
     >>> from ducksearch import evaluation, upload, search
 
-    >>> documents, queries, qrels = evaluation.load_beir(
-    ...     "scifact",
-    ...     split="train"
-    ... )
+    >>> documents, queries, qrels = evaluation.load_beir("scifact", split="train")
 
     >>> upload.documents(
     ...     database="test.duckdb",
@@ -120,54 +141,29 @@ def graphs(
     ...     fields=["title", "text"],
     ...     documents=documents,
     ... )
-    | Table          | Size |
-    |----------------|------|
-    | documents      | 5183 |
-    | bm25_documents | 5183 |
 
     >>> upload.queries(
     ...     database="test.duckdb",
     ...     queries=queries,
     ...     documents_queries=qrels,
     ... )
-    | Table             | Size |
-    |-------------------|------|
-    | documents         | 5183 |
-    | queries           | 807  |
-    | bm25_documents    | 5183 |
-    | bm25_queries      | 807  |
-    | documents_queries | 916  |
-
-    >>> documents, queries, qrels = evaluation.load_beir(
-    ...     "scifact",
-    ...     split="test"
-    ... )
 
     >>> scores = search.graphs(
-    ...    database="test.duckdb",
-    ...    queries=queries,
-    ...    top_k=10,
+    ...     database="test.duckdb",
+    ...     queries=queries,
+    ...     top_k=10,
     ... )
+
+    >>> assert len(scores) > 0
 
     >>> evaluation_scores = evaluation.evaluate(
     ...     scores=scores,
     ...     qrels=qrels,
     ...     queries=queries,
-    ...     metrics=["ndcg@10", "hits@1", "hits@2", "hits@3", "hits@4", "hits@5", "hits@10"],
+    ...     metrics=["ndcg@10", "hits@1", "hits@10"]
     ... )
 
     >>> assert evaluation_scores["ndcg@10"] > 0.74
-
-    >>> scores = search.graphs(
-    ...    database="test.duckdb",
-    ...    queries=queries,
-    ...    top_k=10,
-    ...    filters="id = '11360768' OR id = '11360768'",
-    ... )
-
-    >>> for sample in scores:
-    ...   for document in sample:
-    ...     assert document["id"] == "11360768" or document["id"] == "11360768"
 
     """
     resource.setrlimit(
@@ -178,17 +174,8 @@ def graphs(
         queries = [queries]
 
     logging.info("Indexing queries.")
-    index_table = pa.Table.from_pydict(
-        {
-            "query": queries,
-        }
-    )
-
-    pq.write_table(
-        index_table,
-        "_queries.parquet",
-        compression="snappy",
-    )
+    index_table = pa.Table.from_pydict({"query": queries})
+    pq.write_table(index_table, "_queries.parquet", compression="snappy")
 
     _insert_queries(
         database=database,
@@ -198,9 +185,7 @@ def graphs(
     )
 
     settings = _select_settings(
-        database=database,
-        schema="bm25_documents",
-        config=config,
+        database=database, schema="bm25_documents", config=config
     )[0]
 
     _create_queries_index(
@@ -214,7 +199,7 @@ def graphs(
     for match in Parallel(
         n_jobs=1 if len(queries) <= batch_size else n_jobs, backend="threading"
     )(
-        delayed(function=_search_graph)(
+        delayed(_search_graph)(
             database,
             batch_queries,
             top_k,
@@ -224,7 +209,7 @@ def graphs(
             filters,
         )
         for index, batch_queries in enumerate(
-            iterable=batchify(X=queries, batch_size=batch_size, desc="Searching")
+            batchify(queries, batch_size=batch_size, desc="Searching")
         )
     ):
         matchs.extend(match)

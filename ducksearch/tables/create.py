@@ -5,7 +5,7 @@ from ..decorators import execute_with_duckdb
     relative_path="tables/create/documents.sql",
 )
 def _create_documents() -> None:
-    """Create the documents table.
+    """Create the documents table in the DuckDB database.
 
     Parameters
     ----------
@@ -13,7 +13,6 @@ def _create_documents() -> None:
         The name of the DuckDB database.
     config: dict, optional
         The configuration options for the DuckDB connection.
-
     """
 
 
@@ -21,17 +20,16 @@ def _create_documents() -> None:
     relative_path="tables/create/schema.sql",
 )
 def _create_schema() -> None:
-    """Create the schema.
+    """Create a schema in the DuckDB database.
 
     Parameters
     ----------
     database: str
         The name of the DuckDB database.
     schema: str
-        The name of the schema.
+        The schema to be created in the database.
     config: dict, optional
         The configuration options for the DuckDB connection.
-
     """
 
 
@@ -40,14 +38,14 @@ def create_schema(
     schema: str,
     config: dict | None = None,
 ) -> None:
-    """Create the schema.
+    """Create the specified schema in the DuckDB database.
 
     Parameters
     ----------
     database: str
         The name of the DuckDB database.
     schema: str
-        The name of the schema.
+        The schema to create within the DuckDB database.
     config: dict, optional
         The configuration options for the DuckDB connection.
 
@@ -59,7 +57,6 @@ def create_schema(
     ...     database="test.duckdb",
     ...     schema="bm25_tables",
     ... )
-
     """
     return _create_schema(database=database, schema=schema, config=config)
 
@@ -71,14 +68,18 @@ def create_documents(
     fields_types: dict[str, str] | None = None,
     config: dict | None = None,
 ) -> None:
-    """Create the documents table.
+    """Create the documents table in the DuckDB database.
 
     Parameters
     ----------
     database: str
         The name of the DuckDB database.
-    fields: list[str]
-        The fields to create the documents table.
+    schema: str
+        The schema in which to create the documents table.
+    fields: str or list[str]
+        The list of fields for the documents table. If a string is provided, it will be converted into a list.
+    fields_types: dict[str, str], optional
+        A dictionary specifying field names as keys and their DuckDB types as values. Defaults to 'VARCHAR' if not provided.
     config: dict, optional
         The configuration options for the DuckDB connection.
 
@@ -111,7 +112,6 @@ def create_documents(
     ...     df=df,
     ...     fields=["title", "text"],
     ... )
-
     """
     if isinstance(fields, str):
         fields = [fields]
@@ -131,7 +131,7 @@ def create_documents(
     relative_path="tables/create/queries.sql",
 )
 def create_queries() -> None:
-    """Create the queries table.
+    """Create the queries table in the DuckDB database.
 
     Parameters
     ----------
@@ -153,7 +153,6 @@ def create_queries() -> None:
     ...     database="test.duckdb",
     ...     schema="bm25_tables",
     ... )
-
     """
 
 
@@ -164,12 +163,13 @@ def create_queries() -> None:
     ]
 )
 def create_documents_queries() -> None:
-    """Create the documents_queries table.
+    """Create the documents_queries table in the DuckDB database.
 
     Parameters
     ----------
     database: str
         The name of the DuckDB database.
+    config: dict, optional
         The configuration options for the DuckDB connection.
 
     Examples
@@ -185,5 +185,4 @@ def create_documents_queries() -> None:
     ...     database="test.duckdb",
     ...     schema="bm25_tables",
     ... )
-
     """

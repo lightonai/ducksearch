@@ -29,7 +29,6 @@ def _insert_documents() -> None:
         The name of the DuckDB database.
     config: dict, optional
         The configuration options for the DuckDB connection.
-
     """
 
 
@@ -39,7 +38,23 @@ def write_parquet(
     fields: list[str],
     key: str,
 ) -> None:
-    """Write a parquet file with the documents to upload them."""
+    """Write a parquet file with document data for upload.
+
+    Parameters
+    ----------
+    documents
+        A list of dictionaries representing the documents to be written to the parquet file.
+    index
+        The index of the current batch being processed.
+    fields
+        The list of document fields to be written to the parquet file.
+    key
+        The key field to uniquely identify each document.
+
+    Notes
+    -----
+    This function writes documents to a temporary parquet file in preparation for bulk uploading into the database.
+    """
     documents_table = collections.defaultdict(list)
 
     for document in documents:
@@ -69,18 +84,28 @@ def insert_documents(
     n_jobs: int = -1,
     config: dict | None = None,
 ) -> None:
-    """Insert documents into the documents table in multi-threading.
+    """Insert documents into the documents table with optional multi-threading.
 
     Parameters
     ----------
-    database: str
+    database
         The name of the DuckDB database.
-    df: pd.DataFrame
-        The DataFrame containing the documents to insert.
-    config: dict, optional
-        The configuration options for the DuckDB connection.
-    update
-        If True, insert the documents and then update the index.
+    schema
+        The schema in which the documents table is located.
+    df
+        The list of document dictionaries or a string (URL) for a Hugging Face dataset to insert.
+    key
+        The field that uniquely identifies each document (e.g., 'id').
+    fields
+        The list of document fields to insert. Can be a string if inserting a single field.
+    fields_types
+        Optional dictionary specifying the DuckDB type for each field. Defaults to 'VARCHAR' for all unspecified fields.
+    batch_size
+        The number of documents to insert in each batch. Default is 30,000.
+    n_jobs
+        Number of parallel jobs to use for inserting documents. Default is -1 (use all available processors).
+    config
+        Optional configuration options for the DuckDB connection.
 
     Examples
     --------
@@ -99,7 +124,6 @@ def insert_documents(
     ...     fields=["title", "text"],
     ...     df=df
     ... )
-
     """
     if isinstance(fields, str):
         fields = [fields]
@@ -172,11 +196,8 @@ def _insert_queries() -> None:
     ----------
     database: str
         The name of the DuckDB database.
-    df: pd.DataFrame
-        The DataFrame containing the queries to insert.
     config: dict, optional
         The configuration options for the DuckDB connection.
-
     """
 
 
@@ -186,16 +207,18 @@ def insert_queries(
     queries: list[str],
     config: dict | None = None,
 ) -> None:
-    """Insert queries into the queries table.
+    """Insert a list of queries into the queries table.
 
     Parameters
     ----------
-    database: str
+    database
         The name of the DuckDB database.
-    queries: list[str]
-        The list of queries to insert.
-    config: dict, optional
-        The configuration options for the DuckDB connection.
+    schema
+        The schema in which the queries table is located.
+    queries
+        A list of query strings to insert into the table.
+    config
+        Optional configuration options for the DuckDB connection.
 
     Examples
     --------
@@ -206,7 +229,6 @@ def insert_queries(
     ...     schema="bm25_tables",
     ...     queries=["query 1", "query 2", "query 3"],
     ... )
-
     """
     create_queries(database=database, schema=schema, config=config)
 
@@ -230,17 +252,14 @@ def insert_queries(
     relative_path="tables/insert/documents_queries.sql",
 )
 def _insert_documents_queries() -> None:
-    """Insert queries documents interactions into the documents_queries table.
+    """Insert query-document interactions into the documents_queries table.
 
     Parameters
     ----------
     database: str
         The name of the DuckDB database.
-    df: pd.DataFrame
-        The DataFrame containing the queries documents interactions to insert.
     config: dict, optional
         The configuration options for the DuckDB connection.
-
     """
 
 
@@ -250,16 +269,18 @@ def insert_documents_queries(
     documents_queries: dict[dict[str, float]],
     config: dict | None = None,
 ) -> None:
-    """Insert queries documents interactions.
+    """Insert interactions between documents and queries into the documents_queries table.
 
     Parameters
     ----------
-    database: str
+    database
         The name of the DuckDB database.
-    documents_queries: dict
-        Mapping of document ids to queries and scores.
-    config: dict, optional
-        The configuration options for the DuckDB connection.
+    schema
+        The schema in which the documents_queries table is located.
+    documents_queries
+        A dictionary mapping document IDs to queries and their corresponding scores.
+    config
+        Optional configuration options for the DuckDB connection.
 
     Examples
     --------
@@ -276,7 +297,6 @@ def insert_documents_queries(
     ...     schema="bm25_tables",
     ...     documents_queries=documents_queries
     ... )
-
     """
     create_queries(database=database, schema=schema, config=config)
 

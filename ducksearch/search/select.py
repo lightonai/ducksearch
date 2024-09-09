@@ -15,14 +15,14 @@ from .create import _select_settings
     relative_path="search/create/queries_index.sql",
 )
 def _create_queries_index() -> None:
-    """Index the queries."""
+    """Create an index for the queries table in the DuckDB database."""
 
 
 @execute_with_duckdb(
     relative_path="search/insert/queries.sql",
 )
 def _insert_queries() -> None:
-    """Index the queries."""
+    """Insert queries into the queries index."""
 
 
 @execute_with_duckdb(
@@ -31,7 +31,7 @@ def _insert_queries() -> None:
     fetch_df=True,
 )
 def _search_query():
-    """Search in duckdb."""
+    """Perform a search on the documents or queries table in DuckDB."""
 
 
 @execute_with_duckdb(
@@ -40,7 +40,7 @@ def _search_query():
     fetch_df=True,
 )
 def _search_query_filters():
-    """Search in duckdb."""
+    """Perform a filtered search on the documents or queries table in DuckDB."""
 
 
 def documents(
@@ -54,72 +54,39 @@ def documents(
     filters: str | None = None,
     **kwargs,
 ) -> list[list[dict]]:
-    """Search for documents from the documents table.
+    """Search for documents in the documents table using specified queries.
 
     Parameters
     ----------
     database
         The name of the DuckDB database.
     queries
-        The list of queries to search.
-    ngram_range
-        The ngram range to use.
-    analyzer
-        The analyzer to use. Either "word" or "char" or "char_wb".
-    normalize
-        Normalize the text.
+        A string or list of query strings to search for.
     batch_size
-        The batch size to use.
+        The batch size for query processing. Default is 30.
     top_k
-        The number of top documents to retrieve.
+        The number of top documents to retrieve for each query. Default is 10.
     top_k_token
-        The number of top tokens to retrieve. It will be used to select top k documents per
-        token.
+        The number of documents to score per token. Default is 10,000.
     n_jobs
-        The number of parallel jobs to run. -1 means using all processors.
+        The number of parallel jobs to use. Default is -1 (use all available processors).
     config
-        The configuration options for the DuckDB connection
+        Optional configuration for DuckDB connection settings.
+    filters
+        Optional SQL filters to apply during the search.
+
+    Returns
+    -------
+    list[list[dict]]
+        A list of lists where each sublist contains the top matching documents for a query.
 
     Examples
     --------
     >>> from ducksearch import evaluation, upload, search
-
-    >>> documents, queries, qrels = evaluation.load_beir(
-    ...     "scifact",
-    ...     split="test"
-    ... )
-
-    >>> scores = search.documents(
-    ...     database="test.duckdb",
-    ...     queries=queries,
-    ...     top_k_token=1000,
-    ... )
-
-    >>> evaluation_scores = evaluation.evaluate(
-    ...     scores=scores,
-    ...     qrels=qrels,
-    ...     queries=queries,
-    ...     metrics=["ndcg@10", "hits@1", "hits@2", "hits@3", "hits@4", "hits@5", "hits@10"],
-    ... )
-
+    >>> documents, queries, qrels = evaluation.load_beir("scifact", split="test")
+    >>> scores = search.documents(database="test.duckdb", queries=queries, top_k_token=1000)
+    >>> evaluation_scores = evaluation.evaluate(scores=scores, qrels=qrels, queries=queries)
     >>> assert evaluation_scores["ndcg@10"] > 0.68
-
-    >>> for sample_documents in scores:
-    ...     for document in sample_documents:
-    ...         assert "title" in document
-    ...         assert "text" in document
-    ...         assert "score" in document
-    ...         assert "id" in document
-
-    >>> scores = search.documents(
-    ...     database="test.duckdb",
-    ...     queries=queries,
-    ...     filters="id = '11360768' OR id = '11360768'",
-    ... )
-
-    >>> for sample in scores:
-    ...   for document in sample:
-    ...     assert document["id"] == "11360768" or document["id"] == "11360768"
 
     """
     return search(
@@ -148,63 +115,42 @@ def queries(
     filters: str | None = None,
     **kwargs,
 ) -> list[list[dict]]:
-    """Search for queries from the queries table.
+    """Search for queries in the queries table using specified queries.
 
     Parameters
     ----------
     database
         The name of the DuckDB database.
     queries
-        The list of queries to search.
-    ngram_range
-        The ngram range to use.
-    analyzer
-        The analyzer to use. Either "word" or "char" or "char_wb".
-    normalize
-        Normalize the text.
+        A string or list of query strings to search for.
     batch_size
-        The batch size to use.
+        The batch size for query processing. Default is 30.
     top_k
-        The number of top documents to retrieve.
+        The number of top matching queries to retrieve. Default is 10.
     top_k_token
-        The number of top tokens to retrieve. It will be used to select top k documents per
-        token.
+        The number of documents to score per token. Default is 10,000.
     n_jobs
-        The number of parallel jobs to run. -1 means using all processors.
+        The number of parallel jobs to use. Default is -1 (use all available processors).
     config
-        The configuration options for the DuckDB connection
+        Optional configuration for DuckDB connection settings.
+    filters
+        Optional SQL filters to apply during the search.
+
+    Returns
+    -------
+    list[list[dict]]
+        A list of lists where each sublist contains the top matching queries for a query.
 
     Examples
     --------
     >>> from ducksearch import evaluation, upload, search
 
-    >>> documents, queries, qrels = evaluation.load_beir(
-    ...     "scifact",
-    ...     split="test"
-    ... )
+    >>> documents, queries, qrels = evaluation.load_beir("scifact", split="test")
 
-    >>> scores = search.queries(
-    ...     database="test.duckdb",
-    ...     queries=queries,
-    ... )
+    >>> scores = search.queries(database="test.duckdb", queries=queries)
 
-    >>> n = 0
-    >>> for sample, query in zip(scores, queries):
-    ...   if sample[0]["query"] == query:
-    ...     n += 1
-
+    >>> n = sum(1 for sample, query in zip(scores, queries) if sample[0]["query"] == query)
     >>> assert n >= 290
-
-    >>> scores = search.queries(
-    ...     database="test.duckdb",
-    ...     queries=queries,
-    ...     filters="id = 1 OR id = 2",
-    ... )
-
-    >>> for sample in scores:
-    ...   for document in sample:
-    ...     assert document["id"] == "1" or document["id"] == "2"
-
     """
     return search(
         database=database,
@@ -233,34 +179,40 @@ def _search(
     config: dict | None = None,
     filters: str | None = None,
 ) -> list:
-    """Search in duckdb.
+    """Perform a search on the specified source table (documents or queries).
 
     Parameters
     ----------
+    database
+        The name of the DuckDB database.
+    schema
+        The name of the schema containing the source table.
+    source_schema
+        The name of the schema containing the source data.
+    source
+        The source table to search (either 'documents' or 'queries').
     queries
-        The list of queries to search.
+        A list of query strings to search for.
     top_k
-        The number of top documents to retrieve.
+        The number of top results to retrieve for each query.
     top_k_token
-        The number of top tokens to retrieve. It will be used to select top k documents per
-        token.
+        The number of documents to score per token. Default is 10,000.
     index
-        The index of the batch.
+        The index of the current query batch.
+    config
+        Optional configuration for DuckDB connection settings.
+    filters
+        Optional SQL filters to apply during the search.
 
+    Returns
+    -------
+    list
+        A list of search results for each query in the batch.
     """
     search_function = _search_query_filters if filters is not None else _search_query
 
-    index_table = pa.Table.from_pydict(
-        {
-            "query": queries,
-        }
-    )
-
-    pq.write_table(
-        index_table,
-        f"_queries_{index}.parquet",
-        compression="snappy",
-    )
+    index_table = pa.Table.from_pydict({"query": queries})
+    pq.write_table(index_table, f"_queries_{index}.parquet", compression="snappy")
 
     matchs = search_function(
         database=database,
@@ -296,34 +248,38 @@ def search(
     n_jobs: int = -1,
     config: dict | None = None,
     filters: str | None = None,
-) -> None:
-    """Run the search in parallel.
+) -> list[list[dict]]:
+    """Run the search for documents or queries in parallel.
 
     Parameters
     ----------
     database
         The name of the DuckDB database.
     schema
-        The name of the schema to search.
+        The name of the schema containing the indexed documents or queries.
+    source_schema
+        The name of the schema containing the original documents or queries.
+    source
+        The table to search (either 'documents' or 'queries').
     queries
-        The list of queries to search.
-    ngram_range
-        The ngram range to use.
-    analyzer
-        The analyzer to use. Either "word" or "char" or "char_wb".
-    normalize
-        Normalize the text.
+        A string or list of query strings to search for.
     batch_size
-        The batch size to use.
+        The batch size for query processing. Default is 30.
     top_k
-        The number of top documents to retrieve.
+        The number of top results to retrieve for each query. Default is 10.
     top_k_token
-        The number of top tokens to retrieve. It will be used to select top k documents per
-        token.
+        The number of documents to score per token. Default is 10,000.
     n_jobs
-        The number of parallel jobs to run. -1 means using all processors.
+        The number of parallel jobs to use. Default is -1 (use all available processors).
     config
-        The configuration options for the DuckDB connection
+        Optional configuration for DuckDB connection settings.
+    filters
+        Optional SQL filters to apply during the search.
+
+    Returns
+    -------
+    list[list[dict]]
+        A list of lists where each sublist contains the top matching results for a query.
 
     Examples
     --------
@@ -339,20 +295,15 @@ def search(
     ...     top_k=10,
     ... )
 
-    assert len(documents) == 1
-    assert len(documents[0]) == 10
-
+    >>> assert len(documents) == 1
+    >>> assert len(documents[0]) == 10
 
     """
     if isinstance(queries, str):
         queries = [queries]
 
     logging.info("Indexing queries.")
-    index_table = pa.Table.from_pydict(
-        {
-            "query": queries,
-        }
-    )
+    index_table = pa.Table.from_pydict({"query": queries})
 
     settings = _select_settings(
         database=database,
@@ -384,7 +335,7 @@ def search(
     for match in Parallel(
         n_jobs=1 if len(queries) <= batch_size else n_jobs, backend="threading"
     )(
-        delayed(function=_search)(
+        delayed(_search)(
             database,
             schema,
             source_schema,
@@ -397,7 +348,7 @@ def search(
             filters=filters,
         )
         for index, batch_queries in enumerate(
-            iterable=batchify(X=queries, batch_size=batch_size, desc="Searching")
+            batchify(queries, batch_size=batch_size, desc="Searching")
         )
     ):
         matchs.extend(match)

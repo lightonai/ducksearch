@@ -9,7 +9,7 @@ from ..utils import plot
     relative_path="delete/delete/documents.sql",
 )
 def _drop_documents() -> None:
-    """Delete documents from the documents table."""
+    """Delete documents from the documents table in DuckDB."""
 
 
 def documents(
@@ -18,16 +18,23 @@ def documents(
     schema: str = "bm25_tables",
     config: dict | None = None,
 ) -> None:
-    """Delete documents from the documents table.
+    """Delete specified documents from the documents table.
 
     Parameters
     ----------
     database
         The name of the DuckDB database.
     keys
-        Document keys to delete.
+        A list of document IDs to delete.
+    schema
+        The schema where the documents table is located. Default is 'bm25_tables'.
     config
-        The configuration options for the DuckDB connection.
+        Optional configuration options for the DuckDB connection.
+
+    Returns
+    -------
+    None
+        The function deletes the specified documents and updates the plots.
 
     Examples
     --------
@@ -60,14 +67,17 @@ def documents(
     | bm25_documents | 3    |
 
     """
+    # Convert the list of document keys into a pyarrow Table for deletion
     documents_ids = pa.Table.from_pydict({"id": keys})
 
+    # Write the document IDs to a parquet file for deletion
     pq.write_table(
         documents_ids,
         "_documents_ids.parquet",
         compression="snappy",
     )
 
+    # Call the SQL function to delete the documents
     _drop_documents(
         database=database,
         schema=schema,
@@ -75,6 +85,7 @@ def documents(
         config=config,
     )
 
+    # Plot the current state of the tables after deletion
     return plot(
         database=database,
         config=config,

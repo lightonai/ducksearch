@@ -5,14 +5,22 @@ __all__ = ["evaluate", "load_beir"]
 
 
 def load_beir(dataset_name: str, split: str = "test") -> tuple[list, list, dict]:
-    """Load BEIR dataset.
+    """Load BEIR dataset for document and query retrieval tasks.
 
     Parameters
     ----------
     dataset_name
-        Dataset name: scifact.
+        The name of the dataset to load (e.g., 'scifact').
     split
-        Dataset split: test.
+        The dataset split to load (e.g., 'test'). Default is 'test'.
+
+    Returns
+    -------
+    tuple
+        A tuple containing three elements:
+        - A list of document dictionaries, each containing 'id', 'title', and 'text' fields.
+        - A list of queries.
+        - A dictionary of qrels (query relevance judgments).
 
     Examples
     --------
@@ -37,6 +45,7 @@ def load_beir(dataset_name: str, split: str = "test") -> tuple[list, list, dict]
         split=split
     )
 
+    # Format documents
     documents = [
         {
             "id": document_id,
@@ -46,8 +55,10 @@ def load_beir(dataset_name: str, split: str = "test") -> tuple[list, list, dict]
         for document_id, document in documents.items()
     ]
 
+    # Filter queries
     _queries = [queries[query_id] for query_id, _ in qrels.items()]
 
+    # Format qrels (relevance judgments)
     _qrels = collections.defaultdict(dict)
     for query_id, query_documents in qrels.items():
         for document in list(query_documents.keys()):
@@ -67,24 +78,26 @@ def evaluate(
     queries: list[str],
     metrics: list = [],
 ) -> Dict[str, float]:
-    """Evaluate candidates matchs.
+    """Evaluate the performance of document retrieval using relevance judgments.
 
     Parameters
     ----------
-    matchs
-        Matchs.
+    scores
+        A list of lists, where each sublist contains dictionaries representing the retrieved documents for a query.
     qrels
-        Qrels.
+        A dictionary mapping queries to relevant documents and their relevance scores.
     queries
-        index of queries of qrels.
-    k
-        Number of documents to retrieve.
+        A list of queries.
     metrics
-        Metrics to compute.
+        A list of metrics to compute. Default includes "ndcg@10" and hits at various levels (e.g., hits@1, hits@10).
+
+    Returns
+    -------
+    dict
+        A dictionary mapping each metric to its computed value.
 
     Examples
     --------
-
     >>> from ducksearch import evaluation, upload, search
 
     >>> documents, queries, qrels = evaluation.load_beir("scifact", split="test")
@@ -120,15 +133,15 @@ def evaluate(
     """
     from ranx import Qrels, Run, evaluate
 
+    # Format qrels for evaluation
     _qrels = collections.defaultdict(dict)
     for document_id, document_queries in qrels.items():
         for query, score in document_queries.items():
             _qrels[query][document_id] = score
 
-    qrels = Qrels(
-        qrels=_qrels,
-    )
+    qrels = Qrels(qrels=_qrels)
 
+    # Create a run dict to map queries to their respective retrieved documents and scores
     run_dict = {
         query: {
             match["id"]: 1 - (rank / len(query_matchs))
@@ -139,9 +152,11 @@ def evaluate(
 
     run = Run(run=run_dict)
 
+    # Default metrics if none are provided
     if not metrics:
         metrics = ["ndcg@10"] + [f"hits@{k}" for k in [1, 2, 3, 4, 5, 10]]
 
+    # Evaluate using ranx and return results
     return evaluate(
         qrels=qrels,
         run=run,

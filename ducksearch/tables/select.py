@@ -7,7 +7,12 @@ from ..decorators import execute_with_duckdb
     fetch_df=True,
 )
 def select_documents() -> list[dict]:
-    """Select documents from the documents table.
+    """Select all documents from the documents table.
+
+    Returns
+    -------
+    list[dict]
+        A list of dictionaries representing the documents.
 
     Examples
     --------
@@ -19,7 +24,6 @@ def select_documents() -> list[dict]:
     ... )
 
     >>> assert len(documents) == 3
-
     """
 
 
@@ -29,7 +33,12 @@ def select_documents() -> list[dict]:
     fetch_df=True,
 )
 def select_queries() -> list[dict]:
-    """Select queries from the queries table.
+    """Select all queries from the queries table.
+
+    Returns
+    -------
+    list[dict]
+        A list of dictionaries representing the queries.
 
     Examples
     --------
@@ -41,7 +50,6 @@ def select_queries() -> list[dict]:
     ... )
 
     >>> assert len(queries) == 3
-
     """
 
 
@@ -51,7 +59,13 @@ def select_queries() -> list[dict]:
     fields=["column"],
 )
 def select_columns() -> list[dict]:
-    """Get the list of columns from a table."""
+    """Retrieve the list of columns from a specified table.
+
+    Returns
+    -------
+    list[dict]
+        A list of dictionaries containing the column names of the table.
+    """
 
 
 def select_documents_columns(
@@ -59,7 +73,21 @@ def select_documents_columns(
     schema: str,
     config: dict | None = None,
 ) -> list[str]:
-    """Select the columns from the documents table.
+    """Select the column names from the documents table, excluding the 'bm25id' column.
+
+    Parameters
+    ----------
+    database
+        The name of the DuckDB database.
+    schema
+        The schema where the documents table is located.
+    config
+        Optional configuration options for the DuckDB connection.
+
+    Returns
+    -------
+    list[str]
+        A list of column names from the documents table.
 
     Examples
     --------
@@ -70,7 +98,6 @@ def select_documents_columns(
     ...     schema="bm25_tables",
     ... )
     ['id', 'title', 'text']
-
     """
     return [
         column["column"]

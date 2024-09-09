@@ -6,7 +6,7 @@ from ..decorators import execute_with_duckdb
     fetch_df=False,
 )
 def _insert_documents() -> None:
-    """Insert the documents from Hugging Face datasets."""
+    """Insert the documents from Hugging Face datasets into DuckDB."""
 
 
 def insert_documents(
@@ -17,14 +17,22 @@ def insert_documents(
     url: str,
     config: dict | None = None,
 ) -> None:
-    """Upload documents and qrels to duckdb.
+    """Insert documents from a Hugging Face dataset into DuckDB.
 
     Parameters
     ----------
-    documents
-        Documents.
-    documents
-        Set of documents to upload.
+    database
+        The name of the DuckDB database.
+    schema
+        The schema in which the documents table is located.
+    key
+        The key field that uniquely identifies each document (e.g., 'query_id').
+    fields
+        A list of fields to be inserted from the dataset. If a single field is provided as a string, it will be converted to a list.
+    url
+        The URL of the Hugging Face dataset in Parquet format.
+    config
+        Optional configuration options for the DuckDB connection.
 
     Examples
     --------

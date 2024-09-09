@@ -2,6 +2,18 @@ from ..decorators import execute_with_duckdb
 
 
 def create_aligned_markdown_table(data):
+    """Create an aligned markdown table from a dictionary of data.
+
+    Parameters
+    ----------
+    data
+        A dictionary where keys are the table names and values are their sizes.
+
+    Returns
+    -------
+    str
+        A formatted markdown table showing table names and sizes.
+    """
     # Define the headers
     headers = ["Table", "Size"]
 
@@ -37,7 +49,13 @@ def create_aligned_markdown_table(data):
     fetch_df=True,
 )
 def _plot_queries_documents():
-    """Plot the queries."""
+    """Fetch the table statistics from the DuckDB database.
+
+    Returns
+    -------
+    list[dict]
+        A list of dictionaries where each dictionary contains table statistics.
+    """
 
 
 def plot(
@@ -51,7 +69,21 @@ def plot(
         "bm25_tables.documents_queries",
     ],
 ) -> str:
-    """Plot statistics about the dataset.
+    """Generate and display a markdown table with statistics of the specified dataset tables.
+
+    Parameters
+    ----------
+    database
+        The name of the DuckDB database.
+    config
+        Optional configuration options for the DuckDB connection.
+    tables
+        A list of table names to plot statistics for. Defaults to common BM25 tables.
+
+    Returns
+    -------
+    str
+        A markdown table representing the sizes of the specified tables.
 
     Examples
     --------
@@ -62,11 +94,11 @@ def plot(
     |-----------|------|
     | documents | 5183 |
     | queries   | 300  |
-
     """
     data = {}
     for table in tables:
         try:
+            # Fetch the table statistics for each specified table
             data.update(
                 _plot_queries_documents(database=database, table=table, config=config)[
                     0
@@ -75,9 +107,12 @@ def plot(
         except Exception:
             continue
 
+    # Clean up table names and filter out empty tables
     data = {
         table.replace(".docs", "").replace("bm25_tables.", ""): size
         for table, size in data.items()
         if size > 0
     }
+
+    # Print the markdown table
     return print(create_aligned_markdown_table(data=data))

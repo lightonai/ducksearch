@@ -13,7 +13,7 @@ from ..utils import batchify
     relative_path="search/create/tables.sql",
 )
 def _create_tables() -> None:
-    """Create the dedicated index tables."""
+    """Create the necessary index tables in the DuckDB database."""
 
 
 @execute_with_duckdb(
@@ -21,28 +21,28 @@ def _create_tables() -> None:
     fetch_df=True,
 )
 def _settings_exists() -> None:
-    """Check if the settings exist."""
+    """Check if index settings already exist in the DuckDB database."""
 
 
 @execute_with_duckdb(
     relative_path="search/create/settings.sql",
 )
 def _create_settings() -> None:
-    """Check if the settings exist."""
+    """Create index settings in the DuckDB database."""
 
 
 @execute_with_duckdb(
     relative_path="search/insert/settings.sql",
 )
 def _insert_settings() -> None:
-    """Check if the settings exist."""
+    """Insert index settings into the DuckDB database."""
 
 
 @execute_with_duckdb(
     relative_path="search/create/stopwords.sql",
 )
 def _insert_stopwords() -> None:
-    """Check if the settings exist."""
+    """Insert custom stopwords into the DuckDB database."""
 
 
 @execute_with_duckdb(
@@ -51,14 +51,14 @@ def _insert_stopwords() -> None:
     fetch_df=True,
 )
 def _select_settings() -> None:
-    """Check if the settings exist."""
+    """Select index settings from the DuckDB database."""
 
 
 @execute_with_duckdb(
     relative_path="search/create/index.sql",
 )
 def _create_index() -> None:
-    """Parse documents tokens."""
+    """Create the search index in the DuckDB database by parsing document tokens."""
 
 
 @execute_with_duckdb(
@@ -68,7 +68,7 @@ def _create_index() -> None:
     ],
 )
 def _update_dict() -> None:
-    """Parse documents tokens."""
+    """Update the dictionary for the search index."""
 
 
 @execute_with_duckdb(
@@ -77,7 +77,7 @@ def _update_dict() -> None:
     ],
 )
 def _update_docs() -> None:
-    """Parse documents tokens."""
+    """Update document tokens in the search index."""
 
 
 @execute_with_duckdb(
@@ -86,14 +86,14 @@ def _update_docs() -> None:
     ],
 )
 def _update_stats() -> None:
-    """Parse documents tokens."""
+    """Update the statistics of the search index."""
 
 
 @execute_with_duckdb(
     relative_path="search/insert/terms.sql",
 )
 def _update_terms() -> None:
-    """Parse documents tokens."""
+    """Update the terms in the search index."""
 
 
 @execute_with_duckdb(
@@ -102,7 +102,7 @@ def _update_terms() -> None:
     fetch_df=True,
 )
 def _termids_to_score() -> None:
-    """Parse documents tokens."""
+    """Retrieve term IDs for scoring in the search index."""
 
 
 @execute_with_duckdb(
@@ -111,35 +111,35 @@ def _termids_to_score() -> None:
     read_only=True,
 )
 def _stats():
-    """Update the search index."""
+    """Fetch the current statistics of the search index."""
 
 
 @execute_with_duckdb(
     relative_path="search/update/scores.sql",
 )
 def _update_scores() -> None:
-    """Update the search index."""
+    """Update the BM25 scores in the search index."""
 
 
 @execute_with_duckdb(
     relative_path="search/drop/schema.sql",
 )
 def _drop_schema() -> None:
-    """Drop the schema."""
+    """Drop the schema from the DuckDB database."""
 
 
 @execute_with_duckdb(
     relative_path="search/drop/_documents.sql",
 )
 def _drop_documents() -> None:
-    """Drop the schema."""
+    """Drop the documents table from the DuckDB database."""
 
 
 @execute_with_duckdb(
     relative_path="search/update/bm25id.sql",
 )
 def _update_bm25id() -> None:
-    """Update the search index."""
+    """Update the BM25 index ID in the DuckDB database."""
 
 
 def update_index(
@@ -159,32 +159,62 @@ def update_index(
     config: dict | None = None,
     batch_size: int = 10_000,
 ) -> None:
-    """Create the search index.
+    """Create or update the BM25 search index for the documents or queries table.
 
     Parameters
     ----------
     database
-        Database name.
-    ngram_range
-        The range of n-grams to consider.
-    analyzer
-        The analyzer to use.
-    normalize
-        Whether to normalize the tokens.
-    b
-        The impact of document length normalization.  Default is `0.75`, Higher will
-        penalize longer documents more.
+        The name of the DuckDB database.
+    bm25_schema
+        The schema where the BM25 index is created.
+    source_schema
+        The schema where the original documents or queries are stored.
+    source
+        The name of the source table (either "documents" or "queries").
+    key
+        The key field identifying each document or query (e.g., "id").
+    fields
+        The fields to index for each document or query.
     k1
-        How quickly the impact of term frequency saturates.  Default is `1.5`, Higher
-        will make term frequency more influential.
-    batch_size
-        The batch size to use.
+        The BM25 k1 parameter, controls term saturation. Default is 1.5.
+    b
+        The BM25 b parameter, controls document length normalization. Default is 0.75.
+    stemmer
+        The stemming algorithm to use (e.g., 'porter'). Default is 'porter'.
+    stopwords
+        The list of stopwords to exclude from indexing. Can be a list or a string specifying the language (e.g., "english").
+    ignore
+        A regex pattern to ignore characters during tokenization. Default ignores punctuation and non-alphabetic characters.
+    strip_accents
+        Whether to remove accents from characters during indexing. Default is True.
+    lower
+        Whether to convert text to lowercase during indexing. Default is True.
     config
-        Configuration options for the DuckDB connection.
+        Optional configuration settings for the DuckDB connection.
+    batch_size
+        The number of documents or queries to process per batch. Default is 10,000.
+
+    Examples
+    --------
+    >>> from ducksearch import evaluation, upload, search
+
+    >>> documents, queries, qrels = evaluation.load_beir("scifact", split="test")
+
+    >>> upload.documents(
+    ...     database="test.duckdb",
+    ...     key="id",
+    ...     fields=["title", "text"],
+    ...     documents=documents,
+    ...     stopwords=["larva"],
+    ... )
+    | Table          | Size |
+    |----------------|------|
+    | documents      | 5183 |
+    | bm25_documents | 5183 |
 
     """
     if isinstance(fields, list):
-        fields = ", ".join([f"{field}" for field in fields])
+        fields = ", ".join(fields)
 
     _create_tables(
         database=database,
@@ -203,34 +233,18 @@ def update_index(
     )[0]["table_exists"]
 
     if not settings_exists:
-        if not isinstance(stopwords, str):
-            stopwords_table = pa.Table.from_pydict(
-                {
-                    "sw": stopwords,
-                }
-            )
-
-            pq.write_table(
-                table=stopwords_table,
-                where="_stopwords.parquet",
-                compression="snappy",
-            )
-
+        if isinstance(stopwords, list):
+            stopwords_table = pa.Table.from_pydict({"sw": stopwords})
+            pq.write_table(stopwords_table, "_stopwords.parquet", compression="snappy")
             _insert_stopwords(
                 database=database,
                 schema=bm25_schema,
                 parquet_file="_stopwords.parquet",
                 config=config,
             )
-
             stopwords = f"{bm25_schema}.stopwords"
 
-        _create_settings(
-            database=database,
-            schema=bm25_schema,
-            config=config,
-        )
-
+        _create_settings(database=database, schema=bm25_schema, config=config)
         _insert_settings(
             database=database,
             schema=bm25_schema,
@@ -244,11 +258,7 @@ def update_index(
             config=config,
         )
 
-    settings = _select_settings(
-        database=database,
-        schema=bm25_schema,
-        config=config,
-    )[0]
+    settings = _select_settings(database=database, schema=bm25_schema, config=config)[0]
 
     if (
         settings["k1"] != k1
@@ -260,74 +270,28 @@ def update_index(
         or settings["lower"] != int(lower)
     ):
         logging.warning(
-            f"Original settings are different from the selected settings. Settings used: {settings}"
+            f"Original settings differ from the selected settings. Using original settings: {settings}"
         )
 
-    logging.info(msg="Parsing documents tokens.")
-    _create_index(
-        database=database,
-        schema=bm25_schema,
-        **settings,
-        config=config,
-    )
+    logging.info("Parsing document tokens.")
+    _create_index(database=database, schema=bm25_schema, **settings, config=config)
 
-    logging.info(msg="Updating index metadata.")
-    _update_dict(
-        database=database,
-        schema=bm25_schema,
-        config=config,
-    )
-
-    _update_docs(
-        database=database,
-        schema=bm25_schema,
-        config=config,
-    )
-
-    _update_stats(
-        database=database,
-        schema=bm25_schema,
-        config=config,
-    )
-
-    _update_terms(
-        database=database,
-        schema=bm25_schema,
-        config=config,
-    )
+    logging.info("Updating index metadata.")
+    _update_dict(database=database, schema=bm25_schema, config=config)
+    _update_docs(database=database, schema=bm25_schema, config=config)
+    _update_stats(database=database, schema=bm25_schema, config=config)
+    _update_terms(database=database, schema=bm25_schema, config=config)
 
     termids_to_score = _termids_to_score(
-        database=database,
-        schema=bm25_schema,
-        config=config,
-        max_df=100_000,
+        database=database, schema=bm25_schema, config=config, max_df=100_000
     )
+    stats = _stats(database=database, schema=bm25_schema, config=config)[0]
+    num_docs = stats["num_docs"]
+    avgdl = stats["avgdl"]
 
-    stats = _stats(
-        database=database,
-        schema=bm25_schema,
-        config=config,
-    )
-
-    num_docs = stats[0]["num_docs"]
-    avgdl = stats[0]["avgdl"]
-
-    for batch in batchify(
-        X=termids_to_score,
-        batch_size=batch_size,
-        desc="Indexing",
-    ):
-        termids = pa.Table.from_pydict(
-            {
-                "termid": [term["termid"] for term in batch],
-            }
-        )
-
-        pq.write_table(
-            table=termids,
-            where="_termids.parquet",
-            compression="snappy",
-        )
+    for batch in batchify(termids_to_score, batch_size=batch_size, desc="Indexing"):
+        termids = pa.Table.from_pydict({"termid": [term["termid"] for term in batch]})
+        pq.write_table(termids, "_termids.parquet", compression="snappy")
 
         _update_scores(
             database=database,
@@ -340,18 +304,8 @@ def update_index(
             config=config,
         )
 
-    _drop_schema(
-        database=database,
-        schema=bm25_schema,
-        config=config,
-    )
-
-    _drop_documents(
-        database=database,
-        schema=bm25_schema,
-        config=config,
-    )
-
+    _drop_schema(database=database, schema=bm25_schema, config=config)
+    _drop_documents(database=database, schema=bm25_schema, config=config)
     _update_bm25id(
         database=database,
         schema=bm25_schema,
@@ -361,7 +315,7 @@ def update_index(
     )
 
     if os.path.exists("_termids.parquet"):
-        os.remove(path="_termids.parquet")
+        os.remove("_termids.parquet")
 
 
 def update_index_documents(
@@ -375,39 +329,34 @@ def update_index_documents(
     batch_size: int = 10_000,
     config: dict | None = None,
 ) -> None:
-    """Create the index dedicated to search for documents.
+    """Update the BM25 search index for documents.
 
     Parameters
     ----------
     database
-        Database name.
-    ngram_range
-        The range of n-grams to consider.
-    analyzer
-        The analyzer to use.
-    normalize
-        Whether to normalize the tokens.
-    stop_words
-        The list of stop words to drop. Default is `None`.
-    b
-        The impact of document length normalization.  Default is `0.75`, Higher will
-        penalize longer documents more.
+        The name of the DuckDB database.
     k1
-        How quickly the impact of term frequency saturates.  Default is `1.5`, Higher
-        will make term frequency more influential.
+        The BM25 k1 parameter, controls term saturation. Default is 1.5.
+    b
+        The BM25 b parameter, controls document length normalization. Default is 0.75.
+    stemmer
+        The stemming algorithm to use (e.g., 'porter'). Default is 'porter'.
+    stopwords
+        The list of stopwords to exclude from indexing. Can be a list or a string specifying the language (e.g., "english").
+    ignore
+        A regex pattern to ignore characters during tokenization. Default ignores punctuation and non-alphabetic characters.
+    strip_accents
+        Whether to remove accents from characters during indexing. Default is True.
     batch_size
-        The batch size to use.
+        The number of documents to process per batch. Default is 10,000.
     config
-        Configuration options for the DuckDB connection.
+        Optional configuration settings for the DuckDB connection.
 
     Examples
     --------
     >>> from ducksearch import evaluation, upload, search
 
-    >>> documents, queries, qrels = evaluation.load_beir(
-    ...     "scifact",
-    ...     split="test"
-    ... )
+    >>> documents, queries, qrels = evaluation.load_beir("scifact", split="test")
 
     >>> upload.documents(
     ...     database="test.duckdb",
@@ -423,15 +372,10 @@ def update_index_documents(
 
     """
     fields = ", ".join(
-        [
-            f"{field}"
-            for field in select_documents_columns(
-                database=database, schema="bm25_tables", config=config
-            )
-        ]
+        select_documents_columns(database=database, schema="bm25_tables", config=config)
     )
 
-    return update_index(
+    update_index(
         database=database,
         k1=k1,
         b=b,
@@ -460,39 +404,34 @@ def update_index_queries(
     batch_size: int = 10_000,
     config: dict | None = None,
 ) -> None:
-    """Create the index dedicated to search for documents.
+    """Update the BM25 search index for queries.
 
     Parameters
     ----------
     database
-        Database name.
-    ngram_range
-        The range of n-grams to consider.
-    analyzer
-        The analyzer to use.
-    normalize
-        Whether to normalize the tokens.
-    stop_words
-        The list of stop words to drop. Default is `None`.
-    b
-        The impact of document length normalization.  Default is `0.75`, Higher will
-        penalize longer documents more.
+        The name of the DuckDB database.
     k1
-        How quickly the impact of term frequency saturates.  Default is `1.5`, Higher
-        will make term frequency more influential.
+        The BM25 k1 parameter, controls term saturation. Default is 1.5.
+    b
+        The BM25 b parameter, controls document length normalization. Default is 0.75.
+    stemmer
+        The stemming algorithm to use (e.g., 'porter'). Default is 'porter'.
+    stopwords
+        The list of stopwords to exclude from indexing. Can be a list or a string specifying the language (e.g., "english").
+    ignore
+        A regex pattern to ignore characters during tokenization. Default ignores punctuation and non-alphabetic characters.
+    strip_accents
+        Whether to remove accents from characters during indexing. Default is True.
     batch_size
-        The batch size to use.
+        The number of queries to process per batch. Default is 10,000.
     config
-        Configuration options for the DuckDB connection.
+        Optional configuration settings for the DuckDB connection.
 
     Examples
     --------
     >>> from ducksearch import evaluation, upload, search
 
-    >>> documents, queries, qrels = evaluation.load_beir(
-    ...     "scifact",
-    ...     split="test"
-    ... )
+    >>> documents, queries, qrels = evaluation.load_beir("scifact", split="test")
 
     >>> upload.queries(
     ...     database="test.duckdb",
@@ -508,7 +447,7 @@ def update_index_queries(
     | documents_queries | 339  |
 
     """
-    return update_index(
+    update_index(
         database=database,
         k1=k1,
         b=b,
