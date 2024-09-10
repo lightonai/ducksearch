@@ -14,6 +14,41 @@ def _drop_documents() -> None:
     """Delete documents from the documents table in DuckDB."""
 
 
+@execute_with_duckdb(
+    relative_path="delete/update/scores.sql",
+)
+def _update_score() -> None:
+    """Update the score after deleting documents."""
+
+
+@execute_with_duckdb(
+    relative_path="delete/delete/scores.sql",
+)
+def _delete_score() -> None:
+    """Delete the scores for which we don't keep any document."""
+
+
+@execute_with_duckdb(
+    relative_path="delete/update/docs.sql",
+)
+def _update_docs() -> None:
+    """Update the docs table."""
+
+
+@execute_with_duckdb(
+    relative_path="delete/update/terms.sql",
+)
+def _update_terms() -> None:
+    """Update the term table."""
+
+
+@execute_with_duckdb(
+    relative_path="delete/update/stats.sql",
+)
+def _update_stats() -> None:
+    """Update the term table."""
+
+
 def documents(
     database: str,
     ids: list[str],
@@ -66,7 +101,12 @@ def documents(
     | Table          | Size |
     |----------------|------|
     | documents      | 1    |
-    | bm25_documents | 3    |
+    | bm25_documents | 1    |
+
+    >>> delete.documents(
+    ...    database="test.duckdb",
+    ...    ids=[1, 2, 3],
+    ... )
 
     """
     # Convert the list of document keys into a pyarrow Table for deletion
@@ -79,7 +119,36 @@ def documents(
         compression="snappy",
     )
 
-    # Call the SQL function to delete the documents
+    _delete_score(
+        database=database,
+        parquet_file="_documents_ids.parquet",
+        config=config,
+    )
+
+    _update_score(
+        database=database,
+        parquet_file="_documents_ids.parquet",
+        config=config,
+    )
+
+    _update_terms(
+        database=database,
+        parquet_file="_documents_ids.parquet",
+        config=config,
+    )
+
+    _update_docs(
+        database=database,
+        parquet_file="_documents_ids.parquet",
+        config=config,
+    )
+
+    _update_stats(
+        database=database,
+        parquet_file="_documents_ids.parquet",
+        config=config,
+    )
+
     _drop_documents(
         database=database,
         schema=schema,

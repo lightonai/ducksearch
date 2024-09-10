@@ -47,8 +47,7 @@ _scores AS (
     SELECT 
         tf.docid,
         tf.termid,
-        tf.tf *
-        LOG(
+        tf.tf * LOG(
             (
                 ({num_docs} - tdf.df + 0.5) /
                 (tdf.df + 0.5)
@@ -66,8 +65,8 @@ _scores AS (
 _list_scores AS (
     SELECT
         s.termid,
-        LIST(d.docid ORDER BY s.score DESC, s.docid ASC) AS list_docids,
-        LIST(s.score ORDER BY s.score DESC, s.docid ASC) AS list_scores
+        LIST(d.docid ORDER BY s.score DESC, RANDOM() ASC) AS list_docids,
+        LIST(s.score ORDER BY s.score DESC, RANDOM() ASC) AS list_scores
     FROM _scores s
     INNER JOIN
         {schema}.docs d

@@ -246,7 +246,7 @@ def update_index(
     )[0]["table_exists"]
 
     if not settings_exists:
-        if isinstance(stopwords, list):
+        if not isinstance(stopwords, str):
             stopwords_table = pa.Table.from_pydict({"sw": stopwords})
             pq.write_table(stopwords_table, "_stopwords.parquet", compression="snappy")
 
@@ -290,7 +290,6 @@ def update_index(
         settings["k1"] != k1
         or settings["b"] != b
         or settings["stemmer"] != stemmer
-        or settings["stopwords"] != stopwords
         or settings["ignore"] != ignore
         or settings["strip_accents"] != int(strip_accents)
         or settings["lower"] != int(lower)
@@ -326,17 +325,10 @@ def update_index(
         config=config,
     )
 
-    _update_terms(
-        database=database,
-        schema=bm25_schema,
-        config=config,
-    )
-
     termids_to_score = _termids_to_score(
         database=database,
         schema=bm25_schema,
         config=config,
-        max_df=100_000,
     )
 
     _drop_scores_to_recompute(
@@ -361,6 +353,13 @@ def update_index(
     ):
         termids = pa.Table.from_pydict({"termid": [term["termid"] for term in batch]})
         pq.write_table(termids, "_termids.parquet", compression="snappy")
+
+        _update_terms(
+            database=database,
+            schema=bm25_schema,
+            parquet_file="_termids.parquet",
+            config=config,
+        )
 
         _update_scores(
             database=database,
@@ -402,7 +401,7 @@ def update_index_documents(
     k1: float = 1.5,
     b: float = 0.75,
     stemmer: str = "porter",
-    stopwords: str | list[str] = "english",
+    stopwords: str | list[str] = None,
     ignore: str = "(\\.|[^a-z])+",
     strip_accents: bool = True,
     lower: bool = True,
@@ -483,7 +482,7 @@ def update_index_queries(
     k1: float = 1.5,
     b: float = 0.75,
     stemmer: str = "porter",
-    stopwords: str | list[str] = "english",
+    stopwords: str | list[str] = None,
     ignore: str = "(\\.|[^a-z])+",
     strip_accents: bool = True,
     lower: bool = True,

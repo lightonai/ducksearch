@@ -1,8 +1,7 @@
 WITH _terms_to_score AS (
     SELECT 
         term
-    FROM fts_{schema}__documents.dict 
-    WHERE df < {max_df}
+    FROM fts_{schema}__documents.dict
 )
 
 SELECT 

@@ -46,13 +46,12 @@ def _search_query_filters():
 def documents(
     database: str,
     queries: str | list[str],
-    batch_size: int = 30,
+    batch_size: int = 32,
     top_k: int = 10,
-    top_k_token: int = 10_000,
+    top_k_token: int = 30_000,
     n_jobs: int = -1,
     config: dict | None = None,
     filters: str | None = None,
-    **kwargs,
 ) -> list[list[dict]]:
     """Search for documents in the documents table using specified queries.
 
@@ -83,9 +82,24 @@ def documents(
     Examples
     --------
     >>> from ducksearch import evaluation, upload, search
-    >>> documents, queries, qrels = evaluation.load_beir("scifact", split="test")
-    >>> scores = search.documents(database="test.duckdb", queries=queries, top_k_token=1000)
-    >>> evaluation_scores = evaluation.evaluate(scores=scores, qrels=qrels, queries=queries)
+
+    >>> documents, queries, qrels = evaluation.load_beir(
+    ...     "scifact",
+    ...     split="test",
+    ... )
+
+    >>> scores = search.documents(
+    ...     database="test.duckdb",
+    ...     queries=queries,
+    ...     top_k_token=1000,
+    ... )
+
+    >>> evaluation_scores = evaluation.evaluate(
+    ...     scores=scores,
+    ...     qrels=qrels,
+    ...     queries=queries
+    ... )
+
     >>> assert evaluation_scores["ndcg@10"] > 0.68
 
     """
@@ -107,13 +121,12 @@ def documents(
 def queries(
     database: str,
     queries: str | list[str],
-    batch_size: int = 30,
+    batch_size: int = 32,
     top_k: int = 10,
-    top_k_token: int = 10_000,
+    top_k_token: int = 30_000,
     n_jobs: int = -1,
     config: dict | None = None,
     filters: str | None = None,
-    **kwargs,
 ) -> list[list[dict]]:
     """Search for queries in the queries table using specified queries.
 
@@ -233,7 +246,10 @@ def _search(
     for match in matchs:
         query = match.pop("_query")
         candidates[query].append(match)
-    return [candidates[query] for query in queries]
+
+    candidates = [candidates[query] for query in queries]
+
+    return candidates
 
 
 def search(
@@ -242,9 +258,9 @@ def search(
     source_schema: str,
     source: str,
     queries: str | list[str],
-    batch_size: int = 30,
+    batch_size: int = 64,
     top_k: int = 10,
-    top_k_token: int = 10_000,
+    top_k_token: int = 30_000,
     n_jobs: int = -1,
     config: dict | None = None,
     filters: str | None = None,
@@ -336,10 +352,7 @@ def search(
         config=config,
     )
 
-    matchs = []
-    for match in Parallel(
-        n_jobs=1 if len(queries) <= batch_size else n_jobs, backend="threading"
-    )(
+    _matchs = Parallel(n_jobs=n_jobs, backend="threading")(
         delayed(_search)(
             database,
             schema,
@@ -355,7 +368,10 @@ def search(
         for index, batch_queries in enumerate(
             batchify(queries, batch_size=batch_size, desc="Searching")
         )
-    ):
+    )
+
+    matchs = []
+    for match in _matchs:
         matchs.extend(match)
 
     return matchs[0] if is_query_str else matchs

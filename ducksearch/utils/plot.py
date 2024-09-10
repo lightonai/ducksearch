@@ -114,5 +114,5 @@ def plot(
         if size > 0
     }
 
-    # Print the markdown table
-    return print(create_aligned_markdown_table(data=data))
+    if len(data) > 0 and data is not None:
+        return print(create_aligned_markdown_table(data=data))

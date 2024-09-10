@@ -98,7 +98,7 @@ def graphs(
     queries: str | list[str],
     batch_size: int = 30,
     top_k: int = 1000,
-    top_k_token: int = 10_000,
+    top_k_token: int = 30_000,
     n_jobs: int = -1,
     config: dict | None = None,
     filters: str | None = None,

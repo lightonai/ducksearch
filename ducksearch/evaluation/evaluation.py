@@ -55,7 +55,6 @@ def load_beir(dataset_name: str, split: str = "test") -> tuple[list, list, dict]
         for document_id, document in documents.items()
     ]
 
-    # Filter queries
     _queries = [queries[query_id] for query_id, _ in qrels.items()]
 
     # Format qrels (relevance judgments)
@@ -127,8 +126,8 @@ def evaluate(
     ... )
 
     >>> assert evaluation_scores["ndcg@10"] > 0.68
-    >>> assert evaluation_scores["hits@1"] > 0.54
-    >>> assert evaluation_scores["hits@10"] > 0.90
+    >>> assert evaluation_scores["hits@1"] > 0.55
+    >>> assert evaluation_scores["hits@10"] > 0.88
 
     """
     from ranx import Qrels, Run, evaluate

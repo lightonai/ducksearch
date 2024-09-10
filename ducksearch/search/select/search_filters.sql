@@ -34,15 +34,21 @@ _matchs_scores AS (
     GROUP BY 1, 2
 ),
 
+_documents_filter AS (
+    SELECT
+        *
+    FROM {source_schema}.{source}
+    WHERE {filters}
+),
+
 _filtered_scores AS (
     SELECT
         _query,
         _score,
         s.* EXCLUDE (bm25id)
     FROM _matchs_scores ms
-    JOIN {source_schema}.{source} s
+    INNER JOIN _documents_filter s
         ON ms.bm25id = s.bm25id
-    WHERE {filters}
 ),
 
 _partition_scores AS (
