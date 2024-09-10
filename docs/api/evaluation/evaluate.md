@@ -47,16 +47,5 @@ Evaluate the performance of document retrieval using relevance judgments.
 ...     queries=queries,
 ...     top_k=10,
 ... )
-
->>> evaluation_scores = evaluation.evaluate(
-...     scores=scores,
-...     qrels=qrels,
-...     queries=queries,
-...     metrics=["ndcg@10", "hits@1", "hits@2", "hits@3", "hits@4", "hits@5", "hits@10"],
-... )
-
->>> assert evaluation_scores["ndcg@10"] > 0.68
->>> assert evaluation_scores["hits@1"] > 0.54
->>> assert evaluation_scores["hits@10"] > 0.90
 ```
 

@@ -14,7 +14,7 @@ Search for queries in the queries table using specified queries.
 
     A string or list of query strings to search for.
 
-- **batch_size** (*int*) – defaults to `30`
+- **batch_size** (*int*) – defaults to `32`
 
     The batch size for query processing.
 
@@ -22,7 +22,7 @@ Search for queries in the queries table using specified queries.
 
     The number of top matching queries to retrieve.
 
-- **top_k_token** (*int*) – defaults to `10000`
+- **top_k_token** (*int*) – defaults to `30000`
 
     The number of documents to score per token.
 
@@ -37,8 +37,6 @@ Search for queries in the queries table using specified queries.
 - **filters** (*str | None*) – defaults to `None`
 
     Optional SQL filters to apply during the search.
-
-- **kwargs**
 
 
 

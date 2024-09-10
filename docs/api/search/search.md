@@ -26,7 +26,7 @@ Run the search for documents or queries in parallel.
 
     A string or list of query strings to search for.
 
-- **batch_size** (*int*) – defaults to `30`
+- **batch_size** (*int*) – defaults to `64`
 
     The batch size for query processing.
 
@@ -34,7 +34,7 @@ Run the search for documents or queries in parallel.
 
     The number of top results to retrieve for each query.
 
-- **top_k_token** (*int*) – defaults to `10000`
+- **top_k_token** (*int*) – defaults to `30000`
 
     The number of documents to score per token.
 

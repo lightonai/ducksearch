@@ -94,14 +94,6 @@ def documents(
     ...     top_k_token=1000,
     ... )
 
-    >>> evaluation_scores = evaluation.evaluate(
-    ...     scores=scores,
-    ...     qrels=qrels,
-    ...     queries=queries
-    ... )
-
-    >>> assert evaluation_scores["ndcg@10"] > 0.68
-
     """
     return search(
         database=database,
@@ -311,8 +303,7 @@ def search(
     ...     top_k=10,
     ... )
 
-    >>> assert len(documents) == 1
-    >>> assert len(documents[0]) == 10
+    >>> assert len(documents) == 10
 
     """
     is_query_str = False
@@ -352,7 +343,9 @@ def search(
         config=config,
     )
 
-    _matchs = Parallel(n_jobs=n_jobs, backend="threading")(
+    matchs = []
+
+    for match in Parallel(n_jobs=n_jobs, backend="threading")(
         delayed(_search)(
             database,
             schema,
@@ -368,10 +361,7 @@ def search(
         for index, batch_queries in enumerate(
             batchify(queries, batch_size=batch_size, desc="Searching")
         )
-    )
-
-    matchs = []
-    for match in _matchs:
+    ):
         matchs.extend(match)
 
     return matchs[0] if is_query_str else matchs

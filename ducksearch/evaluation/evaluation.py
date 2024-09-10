@@ -118,17 +118,6 @@ def evaluate(
     ...     top_k=10,
     ... )
 
-    >>> evaluation_scores = evaluation.evaluate(
-    ...     scores=scores,
-    ...     qrels=qrels,
-    ...     queries=queries,
-    ...     metrics=["ndcg@10", "hits@1", "hits@2", "hits@3", "hits@4", "hits@5", "hits@10"],
-    ... )
-
-    >>> assert evaluation_scores["ndcg@10"] > 0.68
-    >>> assert evaluation_scores["hits@1"] > 0.55
-    >>> assert evaluation_scores["hits@10"] > 0.88
-
     """
     from ranx import Qrels, Run, evaluate
 

@@ -22,7 +22,7 @@ Update the BM25 search index for documents.
 
     The stemming algorithm to use (e.g., 'porter').
 
-- **stopwords** (*str | list[str]*) – defaults to `english`
+- **stopwords** (*str | list[str]*) – defaults to `None`
 
     The list of stopwords to exclude from indexing. Can be a list or a string specifying the language (e.g., "english").
 

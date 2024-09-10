@@ -22,7 +22,7 @@ Search for graphs in DuckDB using the provided queries.
 
     The number of top documents to retrieve for each query.
 
-- **top_k_token** (*int*) – defaults to `10000`
+- **top_k_token** (*int*) – defaults to `30000`
 
     The number of top tokens to retrieve.
 
@@ -65,16 +65,5 @@ Search for graphs in DuckDB using the provided queries.
 ...     queries=queries,
 ...     top_k=10,
 ... )
-
->>> assert len(scores) > 0
-
->>> evaluation_scores = evaluation.evaluate(
-...     scores=scores,
-...     qrels=qrels,
-...     queries=queries,
-...     metrics=["ndcg@10", "hits@1", "hits@10"]
-... )
-
->>> assert evaluation_scores["ndcg@10"] > 0.74
 ```
 

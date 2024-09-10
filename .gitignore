@@ -8,6 +8,7 @@ __pycache__/
 *.ipynb
 *.duckdb
 duckdb_tmp/
+*.block
 
 evaluation_datasets/
 
@@ -168,3 +169,23 @@ cython_debug/
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
+arguana
+benchmark_bm25s.py
+benchmark_crud.py
+climate-fever
+fever.tmp/duckdb_temp_block-4611686018432402649.block
+fever.tmp/duckdb_temp_block-4611686018432404521.block
+fever.tmp/duckdb_temp_block-4611686018432404963.block
+fever.tmp/duckdb_temp_storage-4.tmp
+metrics.json
+metrics_20K.json
+metrics_bm25s.json
+mmetrics_30K.json
+msmarco
+nfcorpus
+nq
+quora
+scidocs
+scifact
+trec-covid
+webis-touche2020

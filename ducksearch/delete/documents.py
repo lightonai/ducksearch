@@ -22,6 +22,13 @@ def _update_score() -> None:
 
 
 @execute_with_duckdb(
+    relative_path="delete/update/df.sql",
+)
+def _update_df() -> None:
+    """Update the token frequency deleting documents."""
+
+
+@execute_with_duckdb(
     relative_path="delete/delete/scores.sql",
 )
 def _delete_score() -> None:
@@ -126,6 +133,12 @@ def documents(
     )
 
     _update_score(
+        database=database,
+        parquet_file="_documents_ids.parquet",
+        config=config,
+    )
+
+    _update_df(
         database=database,
         parquet_file="_documents_ids.parquet",
         config=config,
