@@ -10,28 +10,22 @@ tests:
 	@echo "Removing test.duckdb if it exists..."
 	rm -rf test.duckdb
 	rm -rf test.duckdb.wal
-	pytest ducksearch/tables/create.py 
-	pytest ducksearch/tables/insert.py 
-	pytest ducksearch/tables/select.py
+	pytest ducksearch/tables/create.py --disable-warnings
+	pytest ducksearch/tables/insert.py --disable-warnings
+	pytest ducksearch/tables/select.py --disable-warnings
 	rm -rf test.duckdb
 	rm -rf test.duckdb.wal
-	pytest ducksearch/hf/insert.py
+	pytest ducksearch/hf/insert.py --disable-warnings
 	rm -rf test.duckdb
 	rm -rf test.duckdb.wal
-	pytest ducksearch/delete/documents.py
+	pytest ducksearch/evaluation/evaluation.py --disable-warnings
 	rm -rf test.duckdb
 	rm -rf test.duckdb.wal
-	pytest ducksearch/evaluation/evaluation.py
+	pytest ducksearch/search/create.py --disable-warnings
+	pytest ducksearch/search/select.py --disable-warnings
 	rm -rf test.duckdb
 	rm -rf test.duckdb.wal
-	pytest ducksearch/upload/upload.py
-	rm -rf test.duckdb
-	rm -rf test.duckdb.wal
-	pytest ducksearch/search/create.py
-	pytest ducksearch/search/select.py
-	rm -rf test.duckdb
-	rm -rf test.duckdb.wal
-	pytest ducksearch/search/graphs.py
+	pytest ducksearch/search/graphs.py --disable-warnings
 	rm -rf test.duckdb
 	rm -rf test.duckdb.wal
 

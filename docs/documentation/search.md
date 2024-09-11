@@ -16,7 +16,7 @@ search.documents(
     queries=["daft punk", "rock"],
     top_k=10,
     top_k_token=10_000,
-    batch_size=30,
+    batch_size=32,
     n_jobs=-1,
 )
 ```
@@ -69,7 +69,7 @@ search.documents(
     queries=["rock", "california"],
     top_k=10,
     top_k_token=10_000,
-    batch_size=30,
+    batch_size=32,
     filters="YEAR(date) <= 1990 AND YEAR(date) >= 1970",
     n_jobs=-1,
 )
@@ -103,35 +103,3 @@ search.documents(
 ???+ info
     The filters are evaluated by DuckDB, so all DuckDB functions are available for use in the filters. You can find more information about DuckDB functions in the [DuckDB documentation](https://duckdb.org/docs/sql/functions/overview).
 
-### Graphs
-
-???+ info
-    To benefit from the `search.graphs` function, we need to upload documents and queries to DuckDB using the `upload.documents` and `upload.queries` functions.
-
-The `search.graphs` function retrieves the top documents. Then it retrieves the top queries indexed from `upload.queries`. Finally, it computes a graph-based ranking of the documents based on the queries.
-
-```python
-from ducksearch import search
-
-search.graphs(
-	database="ducksearch.duckdb",
-	queries="daft punk",
-	top_k=10,
-    top_k_token=10_000,
-    batch_size=30,
-    n_jobs=-1,
-)
-```
-
-```python
-[
-    {
-        "id": "2",
-        "title": "Alive",
-        "style": "electro, punk",
-        "date": Timestamp("2007-11-19 00:00:00"),
-        "popularity": 9,
-        "score": 0.17841622233390808,
-    }
-]
-```

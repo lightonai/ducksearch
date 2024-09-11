@@ -13,21 +13,15 @@
 </div>
 
 <p align="justify">
-DuckSearch is a lightweight and easy-to-use library that allows to index and search documents. DuckSearch is built on top of DuckDB, a high-performance analytical database. DuckDB is designed to execute analytical SQL queries fast, and DuckSearch leverages this to provide efficient and scallable search / filtering capabilities.
+DuckSearch is a lightweight and easy-to-use library to search documents. DuckSearch is built on top of DuckDB, a high-performance analytical database. DuckDB is designed to execute analytical SQL queries fast, and DuckSearch leverages this to provide efficient search and filtering features. DuckSearch index can be updated with new documents and documents can be deleted as well. DuckSearch also supports HuggingFace datasets, allowing to index datasets directly from the HuggingFace Hub.
 </p>
 
 ## Installation
 
-We can install DuckSearch using pip:
+Install DuckSearch using pip:
 
 ```bash
 pip install ducksearch
-```
-
-For evaluation dependencies, we can install DuckSearch with the `eval` extra:
-
-```bash
-pip install "ducksearch[eval]"
 ```
 
 ## Documentation 
@@ -36,7 +30,7 @@ The complete documentation is available [here](https://lightonai.github.io/ducks
 
 ### Upload
 
-We can upload documents to DuckDB using the `upload.documents` function. The documents are stored in a DuckDB database, and the fields are indexed with BM25.
+We can upload documents to DuckDB using the `upload.documents` function. The documents are stored in a DuckDB database, and the `fields` are indexed with BM25.
 
 ```python
 from ducksearch import upload
@@ -79,7 +73,7 @@ upload.documents(
 
 ## Search
 
-We can search documents using the `search.documents` function. The function returns the documents that match the query, sorted by the BM25 score. The `top_k` parameter controls the number of documents to return. We can also filter the results using SQL syntax which will be evaluated by DuckDB, therefore all DuckDB functions are available.
+`search.documents` returns a list of list of documents ordered by relevance. We can control the number of documents to return using the `top_k` parameter. The following example demonstrates how to search for documents with the queries "punk" and "california" while filtering the results to include only documents with a date after 1970 and a popularity score greater than 8.
 
 ```python
 from ducksearch import search
@@ -117,7 +111,22 @@ search.documents(
 ]
 ```
 
-List of DuckDB functions such as date functions can be found [here](https://duckdb.org/docs/sql/functions/date).
+Filters are SQL expressions that are applied to the search results. We can use every filtering function DuckDB provides such as [date functions](https://duckdb.org/docs/sql/functions/date).
+
+## Delete and update index
+
+We can delete documents and update the BM25 weights accordingly using the `delete.documents` function.
+
+```python
+from ducksearch import delete
+
+delete.documents(
+    database="ducksearch.duckdb",
+    ids=[0, 1],
+)
+```
+
+To update the index, we should first delete the documents and then upload the updated documents.
 
 ## Extra features
 
@@ -152,7 +161,6 @@ search.documents(
     database="fineweb.duckdb",
     queries="earth science",
     top_k=2,
-    filters="token_count > 200",
 )
 ```
 
@@ -180,82 +188,31 @@ search.documents(
 ]
 ```
 
-### Graphs
+## Benchmark
 
-The `search.graphs` function can be used to search documents with a graph query. This function is useful if we have paired documents and queries. The search will retrieve the set of documents and queries that match the input query. Then it will build a graph and compute the weight of each document using a graph-based scoring function.
 
-```python
-from ducksearch import search, upload
+| Dataset           | ndcg@10   | hits@1  | hits@10  | mrr@10   | map@10  | r-precision | qps            | Indexation Time (s) | Number of Documents and Queries |
+|-------------------|-----------|---------|----------|----------|---------|-------------|----------------|---------------------|--------------------------------|
+| arguana            | 0.3779    | 0.0     | 0.8267   | 0.2491   | 0.2528  | 0.0108      | 117.80         | 1.42                | 1,406 queries, 8.67K documents |
+| climate-fever      | 0.1184    | 0.1068  | 0.3648   | 0.1644   | 0.0803  | 0.0758      | 5.88           | 302.39              | 1,535 queries, 5.42M documents |
+| dbpedia-entity     | 0.6046    | 0.7669  | 5.6241   | 0.8311   | 0.0649  | 0.0741      | 113.20         | 181.42              | 400 queries, 4.63M documents   |
+| fever              | 0.3861    | 0.2583  | 0.5826   | 0.3525   | 0.3329  | 0.2497      | 74.40          | 329.70              | 6,666 queries, 5.42M documents |
+| fiqa               | 0.2445    | 0.2207  | 0.6790   | 0.3002   | 0.1848  | 0.1594      | 545.77         | 6.04                | 648 queries, 57K documents     |
+| hotpotqa           | 0.4487    | 0.5059  | 0.9699   | 0.5846   | 0.3642  | 0.3388      | 48.15          | 163.14              | 7,405 queries, 5.23M documents |
+| msmarco            | 0.8951    | 1.0     | 8.6279   | 1.0      | 0.0459  | 0.0473      | 35.11          | 202.37              | 6,980 queries, 8.84M documents |
+| nfcorpus           | 0.3301    | 0.4396  | 2.4087   | 0.5292   | 0.1233  | 0.1383      | 3464.66        | 0.99                | 323 queries, 3.6K documents    |
+| nq                 | 0.2451    | 0.1272  | 0.4574   | 0.2099   | 0.1934  | 0.1240      | 150.23         | 71.43               | 3,452 queries, 2.68M documents |
+| quora              | 0.7705    | 0.6783  | 1.1749   | 0.7606   | 0.7206  | 0.6502      | 741.13         | 3.78                | 10,000 queries, 523K documents |
+| scidocs            | 0.1025    | 0.1790  | 0.8240   | 0.2754   | 0.0154  | 0.0275      | 879.11         | 4.46                | 1,000 queries, 25K documents   |
+| scifact            | 0.6908    | 0.5533  | 0.9133   | 0.6527   | 0.6416  | 0.5468      | 2153.64        | 1.22                | 300 queries, 5K documents      |
+| trec-covid         | 0.9533    | 1.0     | 9.4800   | 1.0      | 0.0074  | 0.0077      | 112.38         | 22.15               | 50 queries, 171K documents     |
+| webis-touche2020   | 0.4130    | 0.5510  | 3.7347   | 0.7114   | 0.0564  | 0.0827      | 104.65         | 44.14               | 49 queries, 382K documents     |
 
-documents = [
-    {
-        "id": 0,
-        "title": "Hotel California",
-        "style": "rock",
-        "date": "1977-02-22",
-        "popularity": 9,
-    },
-    {
-        "id": 1,
-        "title": "Here Comes the Sun",
-        "style": "rock",
-        "date": "1969-06-10",
-        "popularity": 10,
-    },
-    {
-        "id": 2,
-        "title": "Alive",
-        "style": "electro, punk",
-        "date": "2007-11-19",
-        "popularity": 9,
-    },
-]
+## References
 
-upload.documents(
-    database="ducksearch.duckdb",
-    key="id",
-    fields=["title", "style", "date", "popularity"],
-    documents=documents,
-    dtypes={
-        "date": "DATE",
-        "popularity": "INT",
-    },
-)
+- [DuckDB](https://duckdb.org/)
 
-# Mapping between documents ids and queries
-documents_queries = {
-    0: ["the beatles", "rock band"],
-    1: ["rock band", "california"],
-    2: ["daft"],
-}
-
-upload.queries(
-	database="ducksearch.duckdb",
-	documents_queries=documents_queries,
-)
-
-search.graphs(
-	database="ducksearch.duckdb",
-	queries="daft punk",
-	top_k=10,
-)
-```
-
-```python
-[
-    {
-        "id": "2",
-        "title": "Alive",
-        "style": "electro, punk",
-        "date": Timestamp("2007-11-19 00:00:00"),
-        "popularity": 9,
-        "score": 2.877532958984375,
-    }
-]
-```
-
-## Lightning fast
-
+- [DuckDB Full Text Search](https://duckdb.org/docs/extensions/full_text_search.html): Note that DuckSearch rely partially on the DuckDB Full Text Search extension but accelerate the search process via `top_k_token` approximation, pre-computation of scores and multi-threading.
 
 ## License
 

@@ -30,7 +30,7 @@ Upload queries to DuckDB, map documents to queries, and index using BM25.
 
     Stemming algorithm to use (e.g., 'porter'). The type of stemmer to be used. One of 'arabic', 'basque', 'catalan', 'danish', 'dutch', 'english', 'finnish', 'french', 'german', 'greek', 'hindi', 'hungarian', 'indonesian', 'irish', 'italian', 'lithuanian', 'nepali', 'norwegian', 'porter', 'portuguese', 'romanian', 'russian', 'serbian', 'spanish', 'swedish', 'tamil', 'turkish', or 'none' if no stemming is to be used.
 
-- **stopwords** (*str | list[str]*) – defaults to `english`
+- **stopwords** (*str | list[str]*) – defaults to `None`
 
     List of stopwords to exclude from indexing. Default can be a custom list or a language string.
 

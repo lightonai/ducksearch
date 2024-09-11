@@ -39,9 +39,7 @@ _matchs_scores AS (
         bm25id,
         SUM(score) AS score
     FROM _matchs
-    WHERE score IS NOT NULL AND score > 0
     GROUP BY 1, 2
-
 ),
 
 _partition_scores AS (
@@ -49,8 +47,9 @@ _partition_scores AS (
         query,
         bm25id,
         score,
-        ROW_NUMBER() OVER (PARTITION BY query ORDER BY score DESC, RANDOM() ASC) AS rank
+        RANK() OVER (PARTITION BY query ORDER BY score DESC, RANDOM() ASC) AS rank
     FROM _matchs_scores
+    QUALIFY rank <= {top_k}
 )
 
 SELECT
@@ -58,7 +57,6 @@ SELECT
     ps.score,
     ps.query AS _query
 FROM _partition_scores ps
-JOIN {source_schema}.{source} s
+INNER JOIN {source_schema}.{source} s
     ON ps.bm25id = s.bm25id
-WHERE ps.rank <= {top_k}
-ORDER BY ps.rank ASC;
+ORDER BY score DESC;

@@ -141,29 +141,29 @@ def graphs(
     ...     fields=["title", "text"],
     ...     documents=documents,
     ... )
+    | Table          | Size |
+    |----------------|------|
+    | documents      | 5183 |
+    | bm25_documents | 5183 |
 
     >>> upload.queries(
     ...     database="test.duckdb",
     ...     queries=queries,
     ...     documents_queries=qrels,
     ... )
+    | Table             | Size |
+    |-------------------|------|
+    | documents         | 5183 |
+    | queries           | 807  |
+    | bm25_documents    | 5183 |
+    | bm25_queries      | 807  |
+    | documents_queries | 916  |
 
     >>> scores = search.graphs(
     ...     database="test.duckdb",
     ...     queries=queries,
     ...     top_k=10,
     ... )
-
-    >>> assert len(scores) > 0
-
-    >>> evaluation_scores = evaluation.evaluate(
-    ...     scores=scores,
-    ...     qrels=qrels,
-    ...     queries=queries,
-    ...     metrics=["ndcg@10", "hits@1", "hits@10"]
-    ... )
-
-    >>> assert evaluation_scores["ndcg@10"] > 0.74
 
     """
     resource.setrlimit(

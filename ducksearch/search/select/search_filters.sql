@@ -56,11 +56,11 @@ _partition_scores AS (
         _query,
         _score AS score,
         * EXCLUDE (_score, _query),
-        ROW_NUMBER() OVER (PARTITION BY _query ORDER BY _score DESC) AS _row_number
+        RANK() OVER (PARTITION BY _query ORDER BY _score DESC) AS _row_number
     FROM _filtered_scores
+    QUALIFY _row_number <= {top_k}
 )
 
 SELECT 
     * EXCLUDE (_row_number)
-FROM _partition_scores
-WHERE _row_number <= {top_k};
+FROM _partition_scores;
