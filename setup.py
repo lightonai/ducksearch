@@ -7,7 +7,7 @@ with open(file="README.md", mode="r", encoding="utf-8") as fh:
 
 base_packages = [
     "pandas >= 2.2.1",
-    "duckdb == 1.0.0",
+    "duckdb >= 1.0.0",
     "pyarrow >= 16.1.0",
     "tqdm >= 4.66.4",
     "joblib >= 1.4.2",
