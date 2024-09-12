@@ -188,6 +188,16 @@ search.documents(
 ]
 ```
 
+## Tables
+
+Ducksearch creates two distinct schemas: `bm25_tables`, `bm25_documents`.
+
+- We can find the uploaded documents in the `bm25_tables.documents` table.
+
+- We can find the inverted index in the `bm25_documents.scores` table. You can update the scores as you wish. Just note that tokens scores will be updated each time you upload documents (every tokens scores mentionned in the set of uploaded documents).
+
+- We can update the set of stopwords in the `bm25_documents.stopwords` table.
+
 ## Benchmark
 
 
