@@ -5,10 +5,11 @@ import resource
 
 import pyarrow as pa
 import pyarrow.parquet as pq
-from joblib import Parallel, delayed
+import tqdm
+from joblib import delayed
 
 from ..decorators import execute_with_duckdb
-from ..utils import batchify, generate_random_hash
+from ..utils import ParallelTqdm, batchify, generate_random_hash
 from .create import _select_settings
 from .select import _create_queries_index, _insert_queries
 
@@ -173,7 +174,7 @@ def graphs(
         group_id: batch
         for group_id, batch in enumerate(
             iterable=batchify(
-                X=queries, batch_size=batch_size, desc="Searching", tqdm_bar=tqdm_bar
+                X=queries, batch_size=batch_size, desc="Searching", tqdm_bar=False
             )
         )
     }
@@ -197,8 +198,8 @@ def graphs(
         config=config,
     )
 
-    if os.path.exists("_queries.parquet"):
-        os.remove("_queries.parquet")
+    if os.path.exists(parquet_file):
+        os.remove(parquet_file)
 
     settings = _select_settings(
         database=database, schema="bm25_documents", config=config
@@ -213,21 +214,49 @@ def graphs(
     )
 
     matchs = []
-    for match in Parallel(
-        n_jobs=1 if len(queries) <= batch_size else n_jobs, backend="threading"
-    )(
-        delayed(_search_graph)(
-            database,
-            batch_queries,
-            top_k,
-            top_k_token,
-            group_id,
-            random_hash,
-            config,
-            filters,
-        )
-        for group_id, batch_queries in batchs.items()
-    ):
-        matchs.extend(match)
+    if n_jobs == 1 or len(batchs) == 1:
+        if tqdm_bar:
+            bar = tqdm.tqdm(
+                total=len(batchs),
+                position=0,
+                desc="Searching",
+            )
+
+        for group_id, batch_queries in batchs.items():
+            matchs.extend(
+                _search_graph(
+                    database=database,
+                    queries=batch_queries,
+                    top_k=top_k,
+                    top_k_token=top_k_token,
+                    group_id=group_id,
+                    random_hash=random_hash,
+                    config=config,
+                    filters=filters,
+                )
+            )
+            if tqdm_bar:
+                bar.update(1)
+    else:
+        for match in ParallelTqdm(
+            n_jobs=n_jobs,
+            backend="threading",
+            total=len(batchs),
+            desc="Searching",
+            tqdm_bar=tqdm_bar,
+        )(
+            delayed(_search_graph)(
+                database,
+                batch_queries,
+                top_k,
+                top_k_token,
+                group_id,
+                random_hash,
+                config,
+                filters,
+            )
+            for group_id, batch_queries in batchs.items()
+        ):
+            matchs.extend(match)
 
     return matchs

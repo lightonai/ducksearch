@@ -4,10 +4,11 @@ import os
 
 import pyarrow as pa
 import pyarrow.parquet as pq
-from joblib import Parallel, delayed
+import tqdm
+from joblib import delayed
 
 from ..decorators import execute_with_duckdb
-from ..utils import batchify, generate_random_hash
+from ..utils import ParallelTqdm, batchify, generate_random_hash
 from .create import _select_settings
 
 
@@ -332,7 +333,7 @@ def search(
         group_id: batch
         for group_id, batch in enumerate(
             iterable=batchify(
-                X=queries, batch_size=batch_size, desc="Searching", tqdm_bar=tqdm_bar
+                X=queries, batch_size=batch_size, desc="Searching", tqdm_bar=False
             )
         )
     }
@@ -375,6 +376,13 @@ def search(
 
     matchs = []
     if n_jobs == 1 or len(batchs) == 1:
+        if tqdm_bar:
+            bar = tqdm.tqdm(
+                total=len(batchs),
+                position=0,
+                desc="Searching",
+            )
+
         for group_id, batch_queries in batchs.items():
             matchs.extend(
                 _search(
@@ -391,8 +399,16 @@ def search(
                     filters=filters,
                 )
             )
+            if tqdm_bar:
+                bar.update(1)
     else:
-        for match in Parallel(n_jobs=n_jobs, backend="threading")(
+        for match in ParallelTqdm(
+            n_jobs=n_jobs,
+            backend="threading",
+            total=len(batchs),
+            desc="Searching",
+            tqdm_bar=tqdm_bar,
+        )(
             delayed(_search)(
                 database,
                 schema,
