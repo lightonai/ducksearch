@@ -9,7 +9,7 @@ def connect_to_duckdb(
     database: str,
     read_only: bool = False,
     config: dict | None = None,
-    max_retry: int = 20,
+    max_retry: int = 30,
     sleep_time: float = 0.1,
     **kwargs,
 ):
@@ -34,7 +34,8 @@ def connect_to_duckdb(
         A DuckDB connection object.
 
     """
-    for _ in range(max_retry):
+    current_retry = 0
+    while True:
         try:
             conn = (
                 duckdb.connect(database=database, read_only=read_only, config=config)
@@ -42,8 +43,11 @@ def connect_to_duckdb(
                 else duckdb.connect(database=database, read_only=read_only)
             )
             break
-        except Exception:
+        except Exception as error:
+            if current_retry >= max_retry:
+                raise error
             time.sleep(sleep_time)
+            current_retry += 1
 
     return conn
 
