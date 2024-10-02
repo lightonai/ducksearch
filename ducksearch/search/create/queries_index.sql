@@ -1,5 +1,5 @@
 PRAGMA CREATE_FTS_INDEX(
-    '{schema}._queries', 
+    '{schema}._queries_{random_hash}', 
     'query', 
     'query', 
     STEMMER='{stemmer}', 

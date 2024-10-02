@@ -7,7 +7,7 @@ import pyarrow.parquet as pq
 from joblib import Parallel, delayed
 
 from ..decorators import execute_with_duckdb
-from ..utils import batchify
+from ..utils import batchify, generate_random_hash
 from .create import _select_settings
 
 
@@ -16,6 +16,13 @@ from .create import _select_settings
 )
 def _create_queries_index() -> None:
     """Create an index for the queries table in the DuckDB database."""
+
+
+@execute_with_duckdb(
+    relative_path="search/drop/queries.sql",
+)
+def _delete_queries_index() -> None:
+    """Delete the queries index from the DuckDB database."""
 
 
 @execute_with_duckdb(
@@ -52,6 +59,7 @@ def documents(
     n_jobs: int = -1,
     config: dict | None = None,
     filters: str | None = None,
+    tqdm_bar: bool = True,
 ) -> list[list[dict]]:
     """Search for documents in the documents table using specified queries.
 
@@ -73,6 +81,8 @@ def documents(
         Optional configuration for DuckDB connection settings.
     filters
         Optional SQL filters to apply during the search.
+    tqdm_bar
+        Whether to display a progress bar when searching.
 
     Returns
     -------
@@ -107,6 +117,7 @@ def documents(
         top_k_token=top_k_token,
         n_jobs=n_jobs,
         filters=filters,
+        tqdm_bar=tqdm_bar,
     )
 
 
@@ -119,6 +130,7 @@ def queries(
     n_jobs: int = -1,
     config: dict | None = None,
     filters: str | None = None,
+    tqdm_bar: bool = True,
 ) -> list[list[dict]]:
     """Search for queries in the queries table using specified queries.
 
@@ -169,6 +181,7 @@ def queries(
         top_k_token=top_k_token,
         n_jobs=n_jobs,
         filters=filters,
+        tqdm_bar=tqdm_bar,
     )
 
 
@@ -180,7 +193,8 @@ def _search(
     queries: list[str],
     top_k: int,
     top_k_token: int,
-    index: int,
+    group_id: int,
+    random_hash: str,
     config: dict | None = None,
     filters: str | None = None,
 ) -> list:
@@ -216,9 +230,6 @@ def _search(
     """
     search_function = _search_query_filters if filters is not None else _search_query
 
-    index_table = pa.Table.from_pydict({"query": queries})
-    pq.write_table(index_table, f"_queries_{index}.parquet", compression="snappy")
-
     matchs = search_function(
         database=database,
         schema=schema,
@@ -226,13 +237,11 @@ def _search(
         source=source,
         top_k=top_k,
         top_k_token=top_k_token,
-        parquet_file=f"_queries_{index}.parquet",
+        random_hash=random_hash,
+        group_id=group_id,
         filters=filters,
         config=config,
     )
-
-    if os.path.exists(f"_queries_{index}.parquet"):
-        os.remove(f"_queries_{index}.parquet")
 
     candidates = collections.defaultdict(list)
     for match in matchs:
@@ -240,7 +249,6 @@ def _search(
         candidates[query].append(match)
 
     candidates = [candidates[query] for query in queries]
-
     return candidates
 
 
@@ -256,6 +264,7 @@ def search(
     n_jobs: int = -1,
     config: dict | None = None,
     filters: str | None = None,
+    tqdm_bar: bool = True,
 ) -> list[list[dict]]:
     """Run the search for documents or queries in parallel.
 
@@ -283,6 +292,8 @@ def search(
         Optional configuration for DuckDB connection settings.
     filters
         Optional SQL filters to apply during the search.
+    tqdm_bar
+        Whether to display a progress bar when searching.
 
     Returns
     -------
@@ -311,57 +322,99 @@ def search(
         queries = [queries]
         is_query_str = True
 
-    logging.info("Indexing queries.")
-    index_table = pa.Table.from_pydict({"query": queries})
-
     settings = _select_settings(
         database=database,
         schema=schema,
         config=config,
     )[0]
 
+    batchs = {
+        group_id: batch
+        for group_id, batch in enumerate(
+            iterable=batchify(
+                X=queries, batch_size=batch_size, desc="Searching", tqdm_bar=tqdm_bar
+            )
+        )
+    }
+
+    pa_queries, pa_group_ids = [], []
+    for group_id, batch_queries in batchs.items():
+        pa_queries.extend(batch_queries)
+        pa_group_ids.extend([group_id] * len(batch_queries))
+
+    logging.info("Indexing queries.")
+    index_table = pa.Table.from_pydict({"query": pa_queries, "group_id": pa_group_ids})
+
+    random_hash = generate_random_hash()
+    parquet_file = f"_queries_{random_hash}.parquet"
+
     pq.write_table(
         index_table,
-        "_queries.parquet",
+        parquet_file,
         compression="snappy",
     )
 
     _insert_queries(
         database=database,
         schema=schema,
-        parquet_file="_queries.parquet",
+        parquet_file=parquet_file,
+        random_hash=random_hash,
         config=config,
     )
 
-    if os.path.exists("_queries.parquet"):
-        os.remove("_queries.parquet")
+    if os.path.exists(path=parquet_file):
+        os.remove(path=parquet_file)
 
     _create_queries_index(
         database=database,
         schema=schema,
+        random_hash=random_hash,
         **settings,
         config=config,
     )
 
     matchs = []
+    if n_jobs == 1 or len(batchs) == 1:
+        for group_id, batch_queries in batchs.items():
+            matchs.extend(
+                _search(
+                    database=database,
+                    schema=schema,
+                    source_schema=source_schema,
+                    source=source,
+                    queries=batch_queries,
+                    top_k=top_k,
+                    top_k_token=top_k_token,
+                    group_id=group_id,
+                    random_hash=random_hash,
+                    config=config,
+                    filters=filters,
+                )
+            )
+    else:
+        for match in Parallel(n_jobs=n_jobs, backend="threading")(
+            delayed(_search)(
+                database,
+                schema,
+                source_schema,
+                source,
+                batch_queries,
+                top_k,
+                top_k_token,
+                group_id,
+                random_hash,
+                config,
+                filters=filters,
+            )
+            for group_id, batch_queries in batchs.items()
+        ):
+            matchs.extend(match)
 
-    for match in Parallel(n_jobs=n_jobs, backend="threading")(
-        delayed(_search)(
-            database,
-            schema,
-            source_schema,
-            source,
-            batch_queries,
-            top_k,
-            top_k_token,
-            index,
-            config,
-            filters=filters,
-        )
-        for index, batch_queries in enumerate(
-            batchify(queries, batch_size=batch_size, desc="Searching")
-        )
-    ):
-        matchs.extend(match)
+    _delete_queries_index(
+        database=database,
+        schema=schema,
+        random_hash=random_hash,
+        config=config,
+    )
 
     return matchs[0] if is_query_str else matchs

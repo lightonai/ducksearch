@@ -14,6 +14,7 @@ from .select import (
     select_documents_columns,
     select_queries,
 )
+from .update import add_columns_documents
 
 __all__ = [
     "create_documents",
@@ -26,4 +27,5 @@ __all__ = [
     "select_documents",
     "select_documents_columns",
     "select_queries",
+    "add_columns_documents",
 ]

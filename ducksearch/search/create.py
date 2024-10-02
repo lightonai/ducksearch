@@ -5,7 +5,6 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 from ..decorators import execute_with_duckdb
-from ..tables import select_documents_columns
 from ..utils import batchify
 
 
@@ -398,6 +397,7 @@ def update_index(
 
 def update_index_documents(
     database: str,
+    fields: list[str],
     k1: float = 1.5,
     b: float = 0.75,
     stemmer: str = "porter",
@@ -414,6 +414,8 @@ def update_index_documents(
     ----------
     database
         The name of the DuckDB database.
+    fields
+        The fields to index for each document.
     k1
         The BM25 k1 parameter, controls term saturation.
     b
@@ -450,14 +452,6 @@ def update_index_documents(
     | bm25_documents | 5183 |
 
     """
-    fields = ", ".join(
-        select_documents_columns(
-            database=database,
-            schema="bm25_tables",
-            config=config,
-        )
-    )
-
     update_index(
         database=database,
         k1=k1,

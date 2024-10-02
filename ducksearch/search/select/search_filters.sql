@@ -1,13 +1,20 @@
-WITH _input_queries AS (
+WITH group_queries AS (
+    SELECT
+        query
+    FROM {schema}._queries_{random_hash}
+    WHERE group_id = {group_id}
+),
+
+ _input_queries AS (
     SELECT
         pf.query,
         ftsdict.term
-    FROM parquet_scan('{parquet_file}') pf
-    JOIN fts_{schema}__queries.docs docs
+    FROM group_queries pf
+    JOIN fts_{schema}__queries_{random_hash}.docs docs
         ON pf.query = docs.name
-    JOIN fts_{schema}__queries.terms terms
+    JOIN fts_{schema}__queries_{random_hash}.terms terms
         ON docs.docid = terms.docid
-    JOIN fts_{schema}__queries.dict ftsdict
+    JOIN fts_{schema}__queries_{random_hash}.dict ftsdict
         ON terms.termid = ftsdict.termid
 ),
 

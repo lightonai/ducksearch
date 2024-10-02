@@ -61,8 +61,8 @@ documents = [
 
 upload.documents(
     database="ducksearch.duckdb",
-    key="id", # unique document identifier
-    fields=["title", "style", "date", "popularity"], # list of fields to index
+    key="id", # Unique document identifier
+    fields=["title", "style"], # List of fields to use for search.
     documents=documents,
     dtypes={
         "date": "DATE",

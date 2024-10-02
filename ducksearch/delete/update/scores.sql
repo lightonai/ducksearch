@@ -1,15 +1,13 @@
 -- This query finds the set of tokens scores for which there won't be any docid / score to keep.
 WITH _docs_to_delete AS (
-    SELECT DISTINCT
-        bm25.docid
-    FROM parquet_scan('{parquet_file}') p
-    INNER JOIN bm25_documents.docs bm25
+    SELECT DISTINCT bm25.docid
+    FROM parquet_scan('{parquet_file}') AS p
+    INNER JOIN bm25_documents.docs AS bm25
         ON p.id = bm25.name
 ),
 
 _terms_to_recompute AS (
-    SELECT DISTINCT
-        term
+    SELECT DISTINCT term
     FROM bm25_documents.terms
     INNER JOIN _docs_to_delete
         ON bm25_documents.terms.docid = _docs_to_delete.docid
@@ -22,16 +20,16 @@ _scores_to_update AS (
         _bm25.term,
         _bm25.list_scores,
         _bm25.list_docids
-    FROM bm25_documents.scores _bm25
-    INNER JOIN _terms_to_recompute _terms
+    FROM bm25_documents.scores AS _bm25
+    INNER JOIN _terms_to_recompute AS _terms
         ON _bm25.term = _terms.term
 ),
 
 _unested_scores AS (
     SELECT
         term,
-        UNNEST(list_scores) AS score,
-        UNNEST(list_docids) AS docid
+        unnest(list_scores) AS score,
+        unnest(list_docids) AS docid
     FROM _scores_to_update
 ),
 
@@ -41,8 +39,8 @@ _unested_unfiltered_scores AS (
         _scores.docid,
         _scores.score,
         _docs.docid AS to_delete
-    FROM _unested_scores _scores
-    LEFT JOIN _docs_to_delete _docs
+    FROM _unested_scores AS _scores
+    LEFT JOIN _docs_to_delete AS _docs
         ON _scores.docid = _docs.docid
 ),
 
@@ -58,8 +56,8 @@ _unested_filtered_scores AS (
 _list_scores AS (
     SELECT
         term,
-        LIST(docid ORDER BY score DESC, docid ASC) AS list_docids,
-        LIST(score ORDER BY score DESC, docid ASC) AS list_scores
+        list(docid ORDER BY score DESC, docid ASC) AS list_docids,
+        list(score ORDER BY score DESC, docid ASC) AS list_scores
     FROM _unested_filtered_scores
     GROUP BY 1
 )
@@ -68,5 +66,5 @@ UPDATE bm25_documents.scores s
 SET
     list_docids = u.list_docids,
     list_scores = u.list_scores
-FROM _list_scores u
+FROM _list_scores AS u
 WHERE s.term = u.term;

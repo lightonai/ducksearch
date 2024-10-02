@@ -1,7 +1,7 @@
-SELECT coalesce (EXISTS (
+SELECT EXISTS(
     SELECT 1
     FROM information_schema.tables
     WHERE
-        table_name = 'settings'
+        LOWER(table_name) = LOWER('{table_name}')
         AND table_schema = '{schema}'
-), FALSE) AS table_exists;
+) AS table_exists;
