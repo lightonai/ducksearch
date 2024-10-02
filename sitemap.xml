@@ -2,172 +2,154 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://lightonai.github.io/ducksearch/</loc>
-         <lastmod>2024-09-12</lastmod>
-         <changefreq>daily</changefreq>
+         <lastmod>2024-10-02</lastmod>
     </url>
     <url>
          <loc>https://lightonai.github.io/ducksearch/api/overview/</loc>
-         <lastmod>2024-09-12</lastmod>
-         <changefreq>daily</changefreq>
+         <lastmod>2024-10-02</lastmod>
     </url>
     <url>
          <loc>https://lightonai.github.io/ducksearch/api/decorators/connect-to-duckdb/</loc>
-         <lastmod>2024-09-12</lastmod>
-         <changefreq>daily</changefreq>
+         <lastmod>2024-10-02</lastmod>
     </url>
     <url>
          <loc>https://lightonai.github.io/ducksearch/api/decorators/execute-with-duckdb/</loc>
-         <lastmod>2024-09-12</lastmod>
-         <changefreq>daily</changefreq>
+         <lastmod>2024-10-02</lastmod>
     </url>
     <url>
          <loc>https://lightonai.github.io/ducksearch/api/evaluation/evaluate/</loc>
-         <lastmod>2024-09-12</lastmod>
-         <changefreq>daily</changefreq>
+         <lastmod>2024-10-02</lastmod>
     </url>
     <url>
          <loc>https://lightonai.github.io/ducksearch/api/evaluation/load-beir/</loc>
-         <lastmod>2024-09-12</lastmod>
-         <changefreq>daily</changefreq>
+         <lastmod>2024-10-02</lastmod>
     </url>
     <url>
          <loc>https://lightonai.github.io/ducksearch/api/hf/insert-documents/</loc>
-         <lastmod>2024-09-12</lastmod>
-         <changefreq>daily</changefreq>
+         <lastmod>2024-10-02</lastmod>
     </url>
     <url>
          <loc>https://lightonai.github.io/ducksearch/api/search/documents/</loc>
-         <lastmod>2024-09-12</lastmod>
-         <changefreq>daily</changefreq>
+         <lastmod>2024-10-02</lastmod>
     </url>
     <url>
          <loc>https://lightonai.github.io/ducksearch/api/search/graphs/</loc>
-         <lastmod>2024-09-12</lastmod>
-         <changefreq>daily</changefreq>
+         <lastmod>2024-10-02</lastmod>
     </url>
     <url>
          <loc>https://lightonai.github.io/ducksearch/api/search/queries/</loc>
-         <lastmod>2024-09-12</lastmod>
-         <changefreq>daily</changefreq>
+         <lastmod>2024-10-02</lastmod>
     </url>
     <url>
          <loc>https://lightonai.github.io/ducksearch/api/search/search/</loc>
-         <lastmod>2024-09-12</lastmod>
-         <changefreq>daily</changefreq>
+         <lastmod>2024-10-02</lastmod>
     </url>
     <url>
          <loc>https://lightonai.github.io/ducksearch/api/search/update-index-documents/</loc>
-         <lastmod>2024-09-12</lastmod>
-         <changefreq>daily</changefreq>
+         <lastmod>2024-10-02</lastmod>
     </url>
     <url>
          <loc>https://lightonai.github.io/ducksearch/api/search/update-index-queries/</loc>
-         <lastmod>2024-09-12</lastmod>
-         <changefreq>daily</changefreq>
+         <lastmod>2024-10-02</lastmod>
+    </url>
+    <url>
+         <loc>https://lightonai.github.io/ducksearch/api/tables/add-columns-documents/</loc>
+         <lastmod>2024-10-02</lastmod>
     </url>
     <url>
          <loc>https://lightonai.github.io/ducksearch/api/tables/create-documents-queries/</loc>
-         <lastmod>2024-09-12</lastmod>
-         <changefreq>daily</changefreq>
+         <lastmod>2024-10-02</lastmod>
     </url>
     <url>
          <loc>https://lightonai.github.io/ducksearch/api/tables/create-documents/</loc>
-         <lastmod>2024-09-12</lastmod>
-         <changefreq>daily</changefreq>
+         <lastmod>2024-10-02</lastmod>
     </url>
     <url>
          <loc>https://lightonai.github.io/ducksearch/api/tables/create-queries/</loc>
-         <lastmod>2024-09-12</lastmod>
-         <changefreq>daily</changefreq>
+         <lastmod>2024-10-02</lastmod>
     </url>
     <url>
          <loc>https://lightonai.github.io/ducksearch/api/tables/create-schema/</loc>
-         <lastmod>2024-09-12</lastmod>
-         <changefreq>daily</changefreq>
+         <lastmod>2024-10-02</lastmod>
     </url>
     <url>
          <loc>https://lightonai.github.io/ducksearch/api/tables/insert-documents-queries/</loc>
-         <lastmod>2024-09-12</lastmod>
-         <changefreq>daily</changefreq>
+         <lastmod>2024-10-02</lastmod>
     </url>
     <url>
          <loc>https://lightonai.github.io/ducksearch/api/tables/insert-documents/</loc>
-         <lastmod>2024-09-12</lastmod>
-         <changefreq>daily</changefreq>
+         <lastmod>2024-10-02</lastmod>
     </url>
     <url>
          <loc>https://lightonai.github.io/ducksearch/api/tables/insert-queries/</loc>
-         <lastmod>2024-09-12</lastmod>
-         <changefreq>daily</changefreq>
+         <lastmod>2024-10-02</lastmod>
     </url>
     <url>
          <loc>https://lightonai.github.io/ducksearch/api/tables/select-documents-columns/</loc>
-         <lastmod>2024-09-12</lastmod>
-         <changefreq>daily</changefreq>
+         <lastmod>2024-10-02</lastmod>
     </url>
     <url>
          <loc>https://lightonai.github.io/ducksearch/api/tables/select-documents/</loc>
-         <lastmod>2024-09-12</lastmod>
-         <changefreq>daily</changefreq>
+         <lastmod>2024-10-02</lastmod>
     </url>
     <url>
          <loc>https://lightonai.github.io/ducksearch/api/tables/select-queries/</loc>
-         <lastmod>2024-09-12</lastmod>
-         <changefreq>daily</changefreq>
+         <lastmod>2024-10-02</lastmod>
     </url>
     <url>
          <loc>https://lightonai.github.io/ducksearch/api/upload/documents/</loc>
-         <lastmod>2024-09-12</lastmod>
-         <changefreq>daily</changefreq>
+         <lastmod>2024-10-02</lastmod>
     </url>
     <url>
          <loc>https://lightonai.github.io/ducksearch/api/upload/queries/</loc>
-         <lastmod>2024-09-12</lastmod>
-         <changefreq>daily</changefreq>
+         <lastmod>2024-10-02</lastmod>
+    </url>
+    <url>
+         <loc>https://lightonai.github.io/ducksearch/api/utils/ParallelTqdm/</loc>
+         <lastmod>2024-10-02</lastmod>
     </url>
     <url>
          <loc>https://lightonai.github.io/ducksearch/api/utils/batchify/</loc>
-         <lastmod>2024-09-12</lastmod>
-         <changefreq>daily</changefreq>
+         <lastmod>2024-10-02</lastmod>
+    </url>
+    <url>
+         <loc>https://lightonai.github.io/ducksearch/api/utils/generate-random-hash/</loc>
+         <lastmod>2024-10-02</lastmod>
+    </url>
+    <url>
+         <loc>https://lightonai.github.io/ducksearch/api/utils/get-list-columns-df/</loc>
+         <lastmod>2024-10-02</lastmod>
     </url>
     <url>
          <loc>https://lightonai.github.io/ducksearch/api/utils/plot/</loc>
-         <lastmod>2024-09-12</lastmod>
-         <changefreq>daily</changefreq>
+         <lastmod>2024-10-02</lastmod>
     </url>
     <url>
          <loc>https://lightonai.github.io/ducksearch/benchmarks/benchmarks/</loc>
-         <lastmod>2024-09-12</lastmod>
-         <changefreq>daily</changefreq>
+         <lastmod>2024-10-02</lastmod>
     </url>
     <url>
          <loc>https://lightonai.github.io/ducksearch/documentation/delete/</loc>
-         <lastmod>2024-09-12</lastmod>
-         <changefreq>daily</changefreq>
+         <lastmod>2024-10-02</lastmod>
     </url>
     <url>
          <loc>https://lightonai.github.io/ducksearch/documentation/graph/</loc>
-         <lastmod>2024-09-12</lastmod>
-         <changefreq>daily</changefreq>
+         <lastmod>2024-10-02</lastmod>
     </url>
     <url>
          <loc>https://lightonai.github.io/ducksearch/documentation/search/</loc>
-         <lastmod>2024-09-12</lastmod>
-         <changefreq>daily</changefreq>
+         <lastmod>2024-10-02</lastmod>
     </url>
     <url>
          <loc>https://lightonai.github.io/ducksearch/documentation/update/</loc>
-         <lastmod>2024-09-12</lastmod>
-         <changefreq>daily</changefreq>
+         <lastmod>2024-10-02</lastmod>
     </url>
     <url>
          <loc>https://lightonai.github.io/ducksearch/documentation/upload/</loc>
-         <lastmod>2024-09-12</lastmod>
-         <changefreq>daily</changefreq>
+         <lastmod>2024-10-02</lastmod>
     </url>
     <url>
          <loc>https://lightonai.github.io/ducksearch/parse/__main__/</loc>
-         <lastmod>2024-09-12</lastmod>
-         <changefreq>daily</changefreq>
+         <lastmod>2024-10-02</lastmod>
     </url>
 </urlset>

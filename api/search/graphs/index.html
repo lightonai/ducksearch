@@ -22,7 +22,7 @@
       
       
       <link rel="icon" href="../../../img/logo.ico">
-      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.32">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.32">
     
     
       
@@ -927,6 +927,8 @@
       
         
       
+        
+      
     
     
       
@@ -943,7 +945,7 @@
         
   
   
-    <a href="../../tables/create-documents-queries/" class="md-nav__link">
+    <a href="../../tables/add-columns-documents/" class="md-nav__link">
       
   
   <span class="md-ellipsis">
@@ -1025,6 +1027,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
       
@@ -1041,7 +1049,7 @@
         
   
   
-    <a href="../../utils/batchify/" class="md-nav__link">
+    <a href="../../utils/ParallelTqdm/" class="md-nav__link">
       
   
   <span class="md-ellipsis">
@@ -1163,6 +1171,9 @@
 <p><strong>filters</strong> (<em>str | None</em>) – defaults to <code>None</code></p>
 <p>Optional SQL filters to apply during the search.</p>
 </li>
+<li>
+<p><strong>tqdm_bar</strong> (<em>bool</em>) – defaults to <code>True</code></p>
+</li>
 </ul>
 <h2 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">&para;</a></h2>
 <div class="language-python highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">ducksearch</span> <span class="kn">import</span> <span class="n">evaluation</span><span class="p">,</span> <span class="n">upload</span><span class="p">,</span> <span class="n">search</span>
@@ -1192,12 +1203,6 @@
 <span class="o">|</span> <span class="n">bm25_documents</span>    <span class="o">|</span> <span class="mi">5183</span> <span class="o">|</span>
 <span class="o">|</span> <span class="n">bm25_queries</span>      <span class="o">|</span> <span class="mi">807</span>  <span class="o">|</span>
 <span class="o">|</span> <span class="n">documents_queries</span> <span class="o">|</span> <span class="mi">916</span>  <span class="o">|</span>
-
-<span class="o">&gt;&gt;&gt;</span> <span class="n">scores</span> <span class="o">=</span> <span class="n">search</span><span class="o">.</span><span class="n">graphs</span><span class="p">(</span>
-<span class="o">...</span>     <span class="n">database</span><span class="o">=</span><span class="s2">&quot;test.duckdb&quot;</span><span class="p">,</span>
-<span class="o">...</span>     <span class="n">queries</span><span class="o">=</span><span class="n">queries</span><span class="p">,</span>
-<span class="o">...</span>     <span class="n">top_k</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
-<span class="o">...</span> <span class="p">)</span>
 </code></pre></div>
 
 

@@ -22,7 +22,7 @@
       
       
       <link rel="icon" href="../../../img/logo.ico">
-      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.32">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.32">
     
     
       
@@ -738,6 +738,8 @@
       
         
       
+        
+      
     
     
       
@@ -770,6 +772,27 @@
             tables
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../add-columns-documents/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    add_columns_documents
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -1109,6 +1132,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
       
@@ -1125,7 +1154,7 @@
         
   
   
-    <a href="../../utils/batchify/" class="md-nav__link">
+    <a href="../../utils/ParallelTqdm/" class="md-nav__link">
       
   
   <span class="md-ellipsis">
@@ -1232,7 +1261,7 @@
 <p>The field that uniquely identifies each document (e.g., 'id').</p>
 </li>
 <li>
-<p><strong>fields</strong> (<em>list[str] | str</em>)</p>
+<p><strong>columns</strong> (<em>list[str] | str</em>)</p>
 <p>The list of document fields to insert. Can be a string if inserting a single field.</p>
 </li>
 <li>
@@ -1268,7 +1297,7 @@
 <span class="o">...</span>     <span class="n">database</span><span class="o">=</span><span class="s2">&quot;test.duckdb&quot;</span><span class="p">,</span>
 <span class="o">...</span>     <span class="n">schema</span><span class="o">=</span><span class="s2">&quot;bm25_tables&quot;</span><span class="p">,</span>
 <span class="o">...</span>     <span class="n">key</span><span class="o">=</span><span class="s2">&quot;id&quot;</span><span class="p">,</span>
-<span class="o">...</span>     <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;title&quot;</span><span class="p">,</span> <span class="s2">&quot;text&quot;</span><span class="p">],</span>
+<span class="o">...</span>     <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;title&quot;</span><span class="p">,</span> <span class="s2">&quot;text&quot;</span><span class="p">],</span>
 <span class="o">...</span>     <span class="n">df</span><span class="o">=</span><span class="n">df</span>
 <span class="o">...</span> <span class="p">)</span>
 </code></pre></div>

@@ -22,7 +22,7 @@
       
       
       <link rel="icon" href="../../../img/logo.ico">
-      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.32">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.32">
     
     
       
@@ -738,6 +738,8 @@
       
         
       
+        
+      
     
     
       
@@ -770,6 +772,27 @@
             tables
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../add-columns-documents/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    add_columns_documents
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -992,6 +1015,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Parameters
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#examples" class="md-nav__link">
     <span class="md-ellipsis">
       Examples
@@ -1100,6 +1132,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
       
@@ -1116,7 +1154,7 @@
         
   
   
-    <a href="../../utils/batchify/" class="md-nav__link">
+    <a href="../../utils/ParallelTqdm/" class="md-nav__link">
       
   
   <span class="md-ellipsis">
@@ -1170,6 +1208,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Parameters
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#examples" class="md-nav__link">
     <span class="md-ellipsis">
       Examples
@@ -1195,6 +1242,24 @@
 
 <h1 id="select_documents">select_documents<a class="headerlink" href="#select_documents" title="Permanent link">&para;</a></h1>
 <p>Select all documents from the documents table.</p>
+<h2 id="parameters">Parameters<a class="headerlink" href="#parameters" title="Permanent link">&para;</a></h2>
+<ul>
+<li>
+<p><strong>database</strong> (<em>str</em>)</p>
+<p>The name of the DuckDB database.</p>
+</li>
+<li>
+<p><strong>schema</strong> (<em>str</em>)</p>
+<p>The schema where the documents table is located.</p>
+</li>
+<li>
+<p><strong>limit</strong> (<em>int | None</em>) – defaults to <code>None</code></p>
+</li>
+<li>
+<p><strong>config</strong> (<em>dict | None</em>) – defaults to <code>None</code></p>
+<p>Optional configuration options for the DuckDB connection.</p>
+</li>
+</ul>
 <h2 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">&para;</a></h2>
 <div class="language-python highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">ducksearch</span> <span class="kn">import</span> <span class="n">tables</span>
 

@@ -22,7 +22,7 @@
       
       
       <link rel="icon" href="../../../img/logo.ico">
-      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.32">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.32">
     
     
       
@@ -834,6 +834,8 @@
       
         
       
+        
+      
     
     
       
@@ -850,7 +852,7 @@
         
   
   
-    <a href="../../tables/create-documents-queries/" class="md-nav__link">
+    <a href="../../tables/add-columns-documents/" class="md-nav__link">
       
   
   <span class="md-ellipsis">
@@ -932,6 +934,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
       
@@ -948,7 +956,7 @@
         
   
   
-    <a href="../../utils/batchify/" class="md-nav__link">
+    <a href="../../utils/ParallelTqdm/" class="md-nav__link">
       
   
   <span class="md-ellipsis">
@@ -1026,7 +1034,7 @@
 
 
 <h1 id="connect_to_duckdb">connect_to_duckdb<a class="headerlink" href="#connect_to_duckdb" title="Permanent link">&para;</a></h1>
-<p>Establish a connection to the DuckDB database.</p>
+<p>Establish a connection to the DuckDB database. Retry connecting if an error occurs.</p>
 <h2 id="parameters">Parameters<a class="headerlink" href="#parameters" title="Permanent link">&para;</a></h2>
 <ul>
 <li>
@@ -1040,6 +1048,17 @@
 <li>
 <p><strong>config</strong> (<em>dict | None</em>) – defaults to <code>None</code></p>
 <p>Optional configuration settings for the DuckDB connection.</p>
+</li>
+<li>
+<p><strong>max_retry</strong> (<em>int</em>) – defaults to <code>30</code></p>
+<p>The maximum number of times to retry connecting to DuckDB.</p>
+</li>
+<li>
+<p><strong>sleep_time</strong> (<em>float</em>) – defaults to <code>0.1</code></p>
+<p>The time to sleep between retries.</p>
+</li>
+<li>
+<p><strong>kwargs</strong></p>
 </li>
 </ul>
 

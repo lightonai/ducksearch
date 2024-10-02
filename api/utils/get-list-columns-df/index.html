@@ -12,13 +12,13 @@
         <meta name="author" content="Raphael Sourty">
       
       
-        <link rel="canonical" href="https://lightonai.github.io/ducksearch/api/search/update-index-queries/">
+        <link rel="canonical" href="https://lightonai.github.io/ducksearch/api/utils/get-list-columns-df/">
       
       
-        <link rel="prev" href="../update-index-documents/">
+        <link rel="prev" href="../generate-random-hash/">
       
       
-        <link rel="next" href="../../tables/add-columns-documents/">
+        <link rel="next" href="../plot/">
       
       
       <link rel="icon" href="../../../img/logo.ico">
@@ -26,7 +26,7 @@
     
     
       
-        <title>update_index_queries - ducksearch</title>
+        <title>get_list_columns_df - ducksearch</title>
       
     
     
@@ -82,7 +82,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#update_index_queries" class="md-skip">
+        <a href="#get_list_columns_df" class="md-skip">
           Skip to content
         </a>
       
@@ -115,7 +115,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              update_index_queries
+              get_list_columns_df
             
           </span>
         </div>
@@ -654,244 +654,53 @@
                 
   
   
-    
   
   
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
   
-    
-    
+  
+    <a href="../../search/documents/" class="md-nav__link">
       
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-    
-    
-      
-      
-    
-    
-      
-    
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_5" checked>
-        
-          
-          <label class="md-nav__link" for="__nav_3_5" id="__nav_3_5_label" tabindex="0">
-            
   
   <span class="md-ellipsis">
     search
   </span>
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_5_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_3_5">
-            <span class="md-nav__icon md-icon"></span>
-            search
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../documents/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    documents
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../graphs/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    graphs
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../queries/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    queries
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../search/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    search
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../update-index-documents/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    update_index_documents
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-    
-  
-  
-  
-    <li class="md-nav__item md-nav__item--active">
       
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+        <span class="md-nav__icon md-icon"></span>
       
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  <span class="md-ellipsis">
-    update_index_queries
-  </span>
+    </a>
   
 
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
-        
-  
-  <span class="md-ellipsis">
-    update_index_queries
-  </span>
-  
-
-      </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#parameters" class="md-nav__link">
-    <span class="md-ellipsis">
-      Parameters
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#examples" class="md-nav__link">
-    <span class="md-ellipsis">
-      Examples
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
       
     </li>
   
@@ -1018,51 +827,212 @@
                 
   
   
+    
   
   
-    
-    
-      
-        
-      
-        
-      
-        
-      
-        
-      
-        
-      
-    
-    
-      
-      
-    
-    
-      
-        
-        
-      
-    
-    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
-      
-        
   
-  
-    <a href="../../utils/ParallelTqdm/" class="md-nav__link">
+    
+    
       
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_8" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3_8" id="__nav_3_8_label" tabindex="0">
+            
   
   <span class="md-ellipsis">
     utils
   </span>
   
 
-      
-        <span class="md-nav__icon md-icon"></span>
-      
-    </a>
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_8_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3_8">
+            <span class="md-nav__icon md-icon"></span>
+            utils
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ParallelTqdm/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    ParallelTqdm
+  </span>
   
 
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../batchify/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    batchify
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../generate-random-hash/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    generate_random_hash
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    get_list_columns_df
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    get_list_columns_df
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Parameters
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../plot/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    plot
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
       
     </li>
   
@@ -1111,15 +1081,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#examples" class="md-nav__link">
-    <span class="md-ellipsis">
-      Examples
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -1135,68 +1096,12 @@
                   
 
 
-<h1 id="update_index_queries">update_index_queries<a class="headerlink" href="#update_index_queries" title="Permanent link">&para;</a></h1>
-<p>Update the BM25 search index for queries.</p>
+<h1 id="get_list_columns_df">get_list_columns_df<a class="headerlink" href="#get_list_columns_df" title="Permanent link">&para;</a></h1>
+<p>Get a list of columns from a list of dictionaries or a DataFrame.</p>
 <h2 id="parameters">Parameters<a class="headerlink" href="#parameters" title="Permanent link">&para;</a></h2>
 <ul>
-<li>
-<p><strong>database</strong> (<em>str</em>)</p>
-<p>The name of the DuckDB database.</p>
-</li>
-<li>
-<p><strong>k1</strong> (<em>float</em>) – defaults to <code>1.5</code></p>
-<p>The BM25 k1 parameter, controls term saturation.</p>
-</li>
-<li>
-<p><strong>b</strong> (<em>float</em>) – defaults to <code>0.75</code></p>
-<p>The BM25 b parameter, controls document length normalization.</p>
-</li>
-<li>
-<p><strong>stemmer</strong> (<em>str</em>) – defaults to <code>porter</code></p>
-<p>The stemming algorithm to use (e.g., 'porter').</p>
-</li>
-<li>
-<p><strong>stopwords</strong> (<em>str | list[str]</em>) – defaults to <code>None</code></p>
-<p>The list of stopwords to exclude from indexing. Can be a list or a string specifying the language (e.g., "english").</p>
-</li>
-<li>
-<p><strong>ignore</strong> (<em>str</em>) – defaults to <code>(\.|[^a-z])+</code></p>
-<p>A regex pattern to ignore characters during tokenization. Default ignores punctuation and non-alphabetic characters.</p>
-</li>
-<li>
-<p><strong>strip_accents</strong> (<em>bool</em>) – defaults to <code>True</code></p>
-<p>Whether to remove accents from characters during indexing.</p>
-</li>
-<li>
-<p><strong>lower</strong> (<em>bool</em>) – defaults to <code>True</code></p>
-</li>
-<li>
-<p><strong>batch_size</strong> (<em>int</em>) – defaults to <code>10000</code></p>
-<p>The number of queries to process per batch.</p>
-</li>
-<li>
-<p><strong>config</strong> (<em>dict | None</em>) – defaults to <code>None</code></p>
-<p>Optional configuration settings for the DuckDB connection.</p>
-</li>
+<li><strong>documents</strong> (<em>list[dict] | pandas.core.frame.DataFrame</em>)</li>
 </ul>
-<h2 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">&para;</a></h2>
-<div class="language-python highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">ducksearch</span> <span class="kn">import</span> <span class="n">evaluation</span><span class="p">,</span> <span class="n">upload</span><span class="p">,</span> <span class="n">search</span>
-
-<span class="o">&gt;&gt;&gt;</span> <span class="n">documents</span><span class="p">,</span> <span class="n">queries</span><span class="p">,</span> <span class="n">qrels</span> <span class="o">=</span> <span class="n">evaluation</span><span class="o">.</span><span class="n">load_beir</span><span class="p">(</span><span class="s2">&quot;scifact&quot;</span><span class="p">,</span> <span class="n">split</span><span class="o">=</span><span class="s2">&quot;test&quot;</span><span class="p">)</span>
-
-<span class="o">&gt;&gt;&gt;</span> <span class="n">upload</span><span class="o">.</span><span class="n">queries</span><span class="p">(</span>
-<span class="o">...</span>     <span class="n">database</span><span class="o">=</span><span class="s2">&quot;test.duckdb&quot;</span><span class="p">,</span>
-<span class="o">...</span>     <span class="n">queries</span><span class="o">=</span><span class="n">queries</span><span class="p">,</span>
-<span class="o">...</span>     <span class="n">documents_queries</span><span class="o">=</span><span class="n">qrels</span><span class="p">,</span>
-<span class="o">...</span> <span class="p">)</span>
-<span class="o">|</span> <span class="n">Table</span>             <span class="o">|</span> <span class="n">Size</span> <span class="o">|</span>
-<span class="o">|-------------------|------|</span>
-<span class="o">|</span> <span class="n">documents</span>         <span class="o">|</span> <span class="mi">5183</span> <span class="o">|</span>
-<span class="o">|</span> <span class="n">queries</span>           <span class="o">|</span> <span class="mi">300</span>  <span class="o">|</span>
-<span class="o">|</span> <span class="n">bm25_documents</span>    <span class="o">|</span> <span class="mi">5183</span> <span class="o">|</span>
-<span class="o">|</span> <span class="n">bm25_queries</span>      <span class="o">|</span> <span class="mi">300</span>  <span class="o">|</span>
-<span class="o">|</span> <span class="n">documents_queries</span> <span class="o">|</span> <span class="mi">339</span>  <span class="o">|</span>
-</code></pre></div>
 
 
 

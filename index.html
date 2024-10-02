@@ -20,7 +20,7 @@
       
       
       <link rel="icon" href="img/logo.ico">
-      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.32">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.32">
     
     
       
@@ -577,6 +577,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#tables" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tables
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#benchmark" class="md-nav__link">
     <span class="md-ellipsis">
       Benchmark
@@ -681,8 +690,8 @@ DuckSearch is a lightweight and easy-to-use library to search documents. DuckSea
 
 <span class="n">upload</span><span class="o">.</span><span class="n">documents</span><span class="p">(</span>
     <span class="n">database</span><span class="o">=</span><span class="s2">&quot;ducksearch.duckdb&quot;</span><span class="p">,</span>
-    <span class="n">key</span><span class="o">=</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="c1"># unique document identifier</span>
-    <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;title&quot;</span><span class="p">,</span> <span class="s2">&quot;style&quot;</span><span class="p">,</span> <span class="s2">&quot;date&quot;</span><span class="p">,</span> <span class="s2">&quot;popularity&quot;</span><span class="p">],</span> <span class="c1"># list of fields to index</span>
+    <span class="n">key</span><span class="o">=</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="c1"># Unique document identifier</span>
+    <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;title&quot;</span><span class="p">,</span> <span class="s2">&quot;style&quot;</span><span class="p">],</span> <span class="c1"># List of fields to use for search.</span>
     <span class="n">documents</span><span class="o">=</span><span class="n">documents</span><span class="p">,</span>
     <span class="n">dtypes</span><span class="o">=</span><span class="p">{</span>
         <span class="s2">&quot;date&quot;</span><span class="p">:</span> <span class="s2">&quot;DATE&quot;</span><span class="p">,</span>
@@ -691,7 +700,7 @@ DuckSearch is a lightweight and easy-to-use library to search documents. DuckSea
 <span class="p">)</span>
 </code></pre></div>
 <h2 id="search">Search<a class="headerlink" href="#search" title="Permanent link">&para;</a></h2>
-<p><code>search.documents</code> returns a list of list of documents ordered by relevance. We can control the number of documents to return using the <code>top_k</code> parameter. The following example demonstrates how to search for documents with the queries "punk" and "california" while filtering the results to include only documents with a date after 1970 and a popularity score greater than 8.</p>
+<p><code>search.documents</code> returns a list of list of documents ordered by relevance. We can control the number of documents to return using the <code>top_k</code> parameter. The following example demonstrates how to search for documents with the queries "punk" and "california" while filtering the results to include only documents with a date after 1970 and a popularity score greater than 8. We will order the results by a weighted sum of the BM25 score and the popularity score provided in the document.</p>
 <div class="language-python highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">ducksearch</span> <span class="kn">import</span> <span class="n">search</span>
 
 <span class="n">search</span><span class="o">.</span><span class="n">documents</span><span class="p">(</span>
@@ -699,6 +708,7 @@ DuckSearch is a lightweight and easy-to-use library to search documents. DuckSea
     <span class="n">queries</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;punk&quot;</span><span class="p">,</span> <span class="s2">&quot;california&quot;</span><span class="p">],</span>
     <span class="n">top_k</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
     <span class="n">filters</span><span class="o">=</span><span class="s2">&quot;YEAR(date) &gt;= 1970 AND popularity &gt; 8&quot;</span><span class="p">,</span>
+    <span class="n">order_by</span><span class="o">=</span><span class="s2">&quot;0.8 * score + 0.2 * popularity DESC&quot;</span><span class="p">,</span>
 <span class="p">)</span>
 </code></pre></div>
 <div class="language-python highlight"><pre><span></span><code><span class="p">[</span>
@@ -725,6 +735,7 @@ DuckSearch is a lightweight and easy-to-use library to search documents. DuckSea
 <span class="p">]</span>
 </code></pre></div>
 <p>Filters are SQL expressions that are applied to the search results. We can use every filtering function DuckDB provides such as <a href="https://duckdb.org/docs/sql/functions/date">date functions</a>.</p>
+<p>Both <code>filters</code> and <code>order_by</code> parameters are optional. If not provided, the results are ordered by BM25 relevance and no filters are applied.</p>
 <h2 id="delete-and-update-index">Delete and update index<a class="headerlink" href="#delete-and-update-index" title="Permanent link">&para;</a></h2>
 <p>We can delete documents and update the BM25 weights accordingly using the <code>delete.documents</code> function.</p>
 <div class="language-python highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">ducksearch</span> <span class="kn">import</span> <span class="n">delete</span>
@@ -737,54 +748,79 @@ DuckSearch is a lightweight and easy-to-use library to search documents. DuckSea
 <p>To update the index, we should first delete the documents and then upload the updated documents.</p>
 <h2 id="extra-features">Extra features<a class="headerlink" href="#extra-features" title="Permanent link">&para;</a></h2>
 <h3 id="huggingface">HuggingFace<a class="headerlink" href="#huggingface" title="Permanent link">&para;</a></h3>
-<p>The <code>upload.documents</code> function can also index HuggingFace datasets directly from the url. 
-The following example demonstrates how to index the FineWeb dataset from HuggingFace:</p>
+<p>The <code>upload.documents</code> function can also index HuggingFace datasets directly from the url. The following example demonstrates how to index the FineWeb dataset from HuggingFace. We will use the fields "text" and "url" for search. We will also specify the data types for the "date", "token_count", and "language_score" fields to be able to filter the results.</p>
 <div class="language-python highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">ducksearch</span> <span class="kn">import</span> <span class="n">upload</span>
 
 <span class="n">upload</span><span class="o">.</span><span class="n">documents</span><span class="p">(</span>
     <span class="n">database</span><span class="o">=</span><span class="s2">&quot;fineweb.duckdb&quot;</span><span class="p">,</span>
     <span class="n">key</span><span class="o">=</span><span class="s2">&quot;id&quot;</span><span class="p">,</span>
-    <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;text&quot;</span><span class="p">,</span> <span class="s2">&quot;url&quot;</span><span class="p">,</span> <span class="s2">&quot;date&quot;</span><span class="p">,</span> <span class="s2">&quot;language&quot;</span><span class="p">,</span> <span class="s2">&quot;token_count&quot;</span><span class="p">,</span> <span class="s2">&quot;language_score&quot;</span><span class="p">],</span>
+    <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;text&quot;</span><span class="p">,</span> <span class="s2">&quot;url&quot;</span><span class="p">],</span>
     <span class="n">documents</span><span class="o">=</span><span class="s2">&quot;https://huggingface.co/datasets/HuggingFaceFW/fineweb/resolve/main/sample/10BT/000_00000.parquet&quot;</span><span class="p">,</span>
     <span class="n">dtypes</span><span class="o">=</span><span class="p">{</span>
         <span class="s2">&quot;date&quot;</span><span class="p">:</span> <span class="s2">&quot;DATE&quot;</span><span class="p">,</span>
         <span class="s2">&quot;token_count&quot;</span><span class="p">:</span> <span class="s2">&quot;INT&quot;</span><span class="p">,</span>
         <span class="s2">&quot;language_score&quot;</span><span class="p">:</span> <span class="s2">&quot;FLOAT&quot;</span><span class="p">,</span>
     <span class="p">},</span>
-    <span class="n">limit</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="c1"># demonstrate with a small dataset</span>
+    <span class="n">limit</span><span class="o">=</span><span class="mi">3000</span><span class="p">,</span> <span class="c1"># demonstrate with a small dataset</span>
 <span class="p">)</span>
 </code></pre></div>
-<p>We can then search the FineWeb dataset with the <code>search.documents</code> function:</p>
+<p>We can then search the FineWeb dataset with the <code>search.documents</code> function. We order the results by BM25 score and then date.</p>
 <div class="language-python highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">ducksearch</span> <span class="kn">import</span> <span class="n">search</span>
 
 <span class="n">search</span><span class="o">.</span><span class="n">documents</span><span class="p">(</span>
     <span class="n">database</span><span class="o">=</span><span class="s2">&quot;fineweb.duckdb&quot;</span><span class="p">,</span>
-    <span class="n">queries</span><span class="o">=</span><span class="s2">&quot;earth science&quot;</span><span class="p">,</span>
+    <span class="n">queries</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;earth science&quot;</span><span class="p">],</span>
     <span class="n">top_k</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+    <span class="n">order_by</span><span class="o">=</span><span class="s2">&quot;score DESC, date DESC&quot;</span><span class="p">,</span>
 <span class="p">)</span>
 </code></pre></div>
 <div class="language-python highlight"><pre><span></span><code><span class="p">[</span>
-    <span class="p">{</span>
-        <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="s2">&quot;&lt;urn:uuid:1e6ae53b-e0d7-431b-8d46-290244e597e9&gt;&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="s2">&quot;Earth Science Tutors in Rowland ...&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;date&quot;</span><span class="p">:</span> <span class="n">Timestamp</span><span class="p">(</span><span class="s2">&quot;2017-08-19 00:00:00&quot;</span><span class="p">),</span>
-        <span class="s2">&quot;language&quot;</span><span class="p">:</span> <span class="s2">&quot;en&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;token_count&quot;</span><span class="p">:</span> <span class="mi">313</span><span class="p">,</span>
-        <span class="s2">&quot;language_score&quot;</span><span class="p">:</span> <span class="mf">0.8718525171279907</span><span class="p">,</span>
-        <span class="s2">&quot;score&quot;</span><span class="p">:</span> <span class="mf">1.1588547229766846</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="p">{</span>
-        <span class="s2">&quot;score&quot;</span><span class="p">:</span> <span class="mf">1.6727683544158936</span><span class="p">,</span>
-        <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="s2">&quot;&lt;urn:uuid:c732ce90-2fbf-41ad-8916-345f6c08e452&gt;&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="s2">&quot;The existing atmosphere surrounding the earth contains ...&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;url&quot;</span><span class="p">:</span> <span class="s2">&quot;http://www.accuracyingenesis.com/atmargon.html&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;date&quot;</span><span class="p">:</span> <span class="n">Timestamp</span><span class="p">(</span><span class="s2">&quot;2015-04-02 00:00:00&quot;</span><span class="p">),</span>
-        <span class="s2">&quot;language&quot;</span><span class="p">:</span> <span class="s2">&quot;en&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;token_count&quot;</span><span class="p">:</span> <span class="mi">1348</span><span class="p">,</span>
-        <span class="s2">&quot;language_score&quot;</span><span class="p">:</span> <span class="mf">0.9564403295516968</span><span class="p">,</span>
-    <span class="p">},</span>
+    <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="s2">&quot;&lt;urn:uuid:1e6ae53b-e0d7-431b-8d46-290244e597e9&gt;&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="s2">&quot;Earth Science Tutors in Rowland...&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;id_1&quot;</span><span class="p">:</span> <span class="s2">&quot;&lt;urn:uuid:1e6ae53b-e0d7-431b-8d46-290244e597e9&gt;&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;dump&quot;</span><span class="p">:</span> <span class="s2">&quot;CC-MAIN-2017-34&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;url&quot;</span><span class="p">:</span> <span class="s2">&quot;http://rowland.universitytutor.com/rowland_earth-science-tutoring&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;date&quot;</span><span class="p">:</span> <span class="n">Timestamp</span><span class="p">(</span><span class="s2">&quot;2017-08-19 00:00:00&quot;</span><span class="p">),</span>
+            <span class="s2">&quot;file_path&quot;</span><span class="p">:</span> <span class="s2">&quot;s3://commoncrawl/crawl-data/CC-MAIN-2017-34/segments/1502886105304.35/warc/CC-MAIN-20170819051034-20170819071034-00240.warc.gz&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;language&quot;</span><span class="p">:</span> <span class="s2">&quot;en&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;language_score&quot;</span><span class="p">:</span> <span class="mf">0.8718525171279907</span><span class="p">,</span>
+            <span class="s2">&quot;token_count&quot;</span><span class="p">:</span> <span class="mi">313</span><span class="p">,</span>
+            <span class="s2">&quot;bm25id&quot;</span><span class="p">:</span> <span class="mi">523</span><span class="p">,</span>
+            <span class="s2">&quot;score&quot;</span><span class="p">:</span> <span class="mf">2.3761106729507446</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="s2">&quot;&lt;urn:uuid:cd94a04f-1632-4c8b-81d2-cb353163116e&gt;&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="s2">&quot;- Geomagnetic field....&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;id_1&quot;</span><span class="p">:</span> <span class="s2">&quot;&lt;urn:uuid:cd94a04f-1632-4c8b-81d2-cb353163116e&gt;&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;dump&quot;</span><span class="p">:</span> <span class="s2">&quot;CC-MAIN-2022-21&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;url&quot;</span><span class="p">:</span> <span class="s2">&quot;https://www.imperial.ac.uk/people/adrian.muxworthy/?respub-action=citation.html&amp;id=1149861&amp;noscript=noscript&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;date&quot;</span><span class="p">:</span> <span class="n">Timestamp</span><span class="p">(</span><span class="s2">&quot;2022-05-20 00:00:00&quot;</span><span class="p">),</span>
+            <span class="s2">&quot;file_path&quot;</span><span class="p">:</span> <span class="s2">&quot;s3://commoncrawl/crawl-data/CC-MAIN-2022-21/segments/1652662530553.34/warc/CC-MAIN-20220519235259-20220520025259-00601.warc.gz&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;language&quot;</span><span class="p">:</span> <span class="s2">&quot;en&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;language_score&quot;</span><span class="p">:</span> <span class="mf">0.8225595951080322</span><span class="p">,</span>
+            <span class="s2">&quot;token_count&quot;</span><span class="p">:</span> <span class="mi">517</span><span class="p">,</span>
+            <span class="s2">&quot;bm25id&quot;</span><span class="p">:</span> <span class="mi">4783</span><span class="p">,</span>
+            <span class="s2">&quot;score&quot;</span><span class="p">:</span> <span class="mf">2.3569871187210083</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">]</span>
 <span class="p">]</span>
 </code></pre></div>
+<p>Note: by default, results are ordered by BM25 relevance.</p>
+<h2 id="tables">Tables<a class="headerlink" href="#tables" title="Permanent link">&para;</a></h2>
+<p>Ducksearch creates two distinct schemas: <code>bm25_tables</code>, <code>bm25_documents</code>.</p>
+<ul>
+<li>
+<p>We can find the uploaded documents in the <code>bm25_tables.documents</code> table.</p>
+</li>
+<li>
+<p>We can find the inverted index in the <code>bm25_documents.scores</code> table. You can update the scores as you wish. Just note that tokens scores will be updated each time you upload documents (every tokens scores mentionned in the set of uploaded documents).</p>
+</li>
+<li>
+<p>We can update the set of stopwords in the <code>bm25_documents.stopwords</code> table.</p>
+</li>
+</ul>
 <h2 id="benchmark">Benchmark<a class="headerlink" href="#benchmark" title="Permanent link">&para;</a></h2>
 <table>
 <thead>

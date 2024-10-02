@@ -22,7 +22,7 @@
       
       
       <link rel="icon" href="../../../img/logo.ico">
-      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.32">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.32">
     
     
       
@@ -927,6 +927,8 @@
       
         
       
+        
+      
     
     
       
@@ -943,7 +945,7 @@
         
   
   
-    <a href="../../tables/create-documents-queries/" class="md-nav__link">
+    <a href="../../tables/add-columns-documents/" class="md-nav__link">
       
   
   <span class="md-ellipsis">
@@ -1025,6 +1027,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
       
@@ -1041,7 +1049,7 @@
         
   
   
-    <a href="../../utils/batchify/" class="md-nav__link">
+    <a href="../../utils/ParallelTqdm/" class="md-nav__link">
       
   
   <span class="md-ellipsis">
@@ -1134,6 +1142,10 @@
 <li>
 <p><strong>database</strong> (<em>str</em>)</p>
 <p>The name of the DuckDB database.</p>
+</li>
+<li>
+<p><strong>fields</strong> (<em>list[str]</em>)</p>
+<p>The fields to index for each document.</p>
 </li>
 <li>
 <p><strong>k1</strong> (<em>float</em>) – defaults to <code>1.5</code></p>

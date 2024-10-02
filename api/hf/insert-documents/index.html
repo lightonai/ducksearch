@@ -22,7 +22,7 @@
       
       
       <link rel="icon" href="../../../img/logo.ico">
-      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.32">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.32">
     
     
       
@@ -822,6 +822,8 @@
       
         
       
+        
+      
     
     
       
@@ -838,7 +840,7 @@
         
   
   
-    <a href="../../tables/create-documents-queries/" class="md-nav__link">
+    <a href="../../tables/add-columns-documents/" class="md-nav__link">
       
   
   <span class="md-ellipsis">
@@ -920,6 +922,12 @@
       
         
       
+        
+      
+        
+      
+        
+      
     
     
       
@@ -936,7 +944,7 @@
         
   
   
-    <a href="../../utils/batchify/" class="md-nav__link">
+    <a href="../../utils/ParallelTqdm/" class="md-nav__link">
       
   
   <span class="md-ellipsis">
@@ -1039,10 +1047,6 @@
 <p>The key field that uniquely identifies each document (e.g., 'query_id').</p>
 </li>
 <li>
-<p><strong>fields</strong> (<em>str | list[str]</em>)</p>
-<p>A list of fields to be inserted from the dataset. If a single field is provided as a string, it will be converted to a list.</p>
-</li>
-<li>
 <p><strong>url</strong> (<em>str</em>)</p>
 <p>The URL of the Hugging Face dataset in Parquet format.</p>
 </li>
@@ -1053,20 +1057,34 @@
 <li>
 <p><strong>limit</strong> (<em>int | None</em>) – defaults to <code>None</code></p>
 </li>
+<li>
+<p><strong>dtypes</strong> (<em>dict | None</em>) – defaults to <code>None</code></p>
+</li>
 </ul>
 <h2 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">&para;</a></h2>
 <div class="language-python highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">ducksearch</span> <span class="kn">import</span> <span class="n">upload</span>
 
 <span class="o">&gt;&gt;&gt;</span> <span class="n">upload</span><span class="o">.</span><span class="n">documents</span><span class="p">(</span>
 <span class="o">...</span>     <span class="n">database</span><span class="o">=</span><span class="s2">&quot;test.duckdb&quot;</span><span class="p">,</span>
-<span class="o">...</span>     <span class="n">documents</span><span class="o">=</span><span class="s2">&quot;hf://datasets/lightonai/lighton-ms-marco-mini/train.parquet&quot;</span><span class="p">,</span>
-<span class="o">...</span>     <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;document_ids&quot;</span><span class="p">,</span> <span class="s2">&quot;scores&quot;</span><span class="p">],</span>
+<span class="o">...</span>     <span class="n">documents</span><span class="o">=</span><span class="s2">&quot;hf://datasets/lightonai/lighton-ms-marco-mini/queries.parquet&quot;</span><span class="p">,</span>
 <span class="o">...</span>     <span class="n">key</span><span class="o">=</span><span class="s2">&quot;query_id&quot;</span><span class="p">,</span>
+<span class="o">...</span>     <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;query_id&quot;</span><span class="p">,</span> <span class="s2">&quot;text&quot;</span><span class="p">],</span>
 <span class="o">...</span> <span class="p">)</span>
 <span class="o">|</span> <span class="n">Table</span>          <span class="o">|</span> <span class="n">Size</span> <span class="o">|</span>
 <span class="o">|----------------|------|</span>
 <span class="o">|</span> <span class="n">documents</span>      <span class="o">|</span> <span class="mi">19</span>   <span class="o">|</span>
 <span class="o">|</span> <span class="n">bm25_documents</span> <span class="o">|</span> <span class="mi">19</span>   <span class="o">|</span>
+
+<span class="o">&gt;&gt;&gt;</span> <span class="n">upload</span><span class="o">.</span><span class="n">documents</span><span class="p">(</span>
+<span class="o">...</span>     <span class="n">database</span><span class="o">=</span><span class="s2">&quot;test.duckdb&quot;</span><span class="p">,</span>
+<span class="o">...</span>     <span class="n">documents</span><span class="o">=</span><span class="s2">&quot;hf://datasets/lightonai/lighton-ms-marco-mini/documents.parquet&quot;</span><span class="p">,</span>
+<span class="o">...</span>     <span class="n">key</span><span class="o">=</span><span class="s2">&quot;document_id&quot;</span><span class="p">,</span>
+<span class="o">...</span>     <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;document_id&quot;</span><span class="p">,</span> <span class="s2">&quot;text&quot;</span><span class="p">],</span>
+<span class="o">...</span> <span class="p">)</span>
+<span class="o">|</span> <span class="n">Table</span>          <span class="o">|</span> <span class="n">Size</span> <span class="o">|</span>
+<span class="o">|----------------|------|</span>
+<span class="o">|</span> <span class="n">documents</span>      <span class="o">|</span> <span class="mi">51</span>   <span class="o">|</span>
+<span class="o">|</span> <span class="n">bm25_documents</span> <span class="o">|</span> <span class="mi">51</span>   <span class="o">|</span>
 </code></pre></div>
 
 
