@@ -10,7 +10,7 @@ Create the documents table in the DuckDB database.
 
 - **schema** (*str*)
 
-- **fields** (*str | list[str]*)
+- **columns** (*str | list[str]*)
 
 - **dtypes** (*dict[str, str] | None*) – defaults to `None`
 
@@ -31,7 +31,7 @@ Create the documents table in the DuckDB database.
 >>> tables.create_documents(
 ...     database="test.duckdb",
 ...     schema="bm25_tables",
-...     fields=["title", "text"],
+...     columns=["title", "text"],
 ...     dtypes={"text": "VARCHAR", "title": "VARCHAR"},
 ... )
 
@@ -46,7 +46,7 @@ Create the documents table in the DuckDB database.
 ...     schema="bm25_tables",
 ...     key="id",
 ...     df=df,
-...     fields=["title", "text"],
+...     columns=["title", "text"],
 ... )
 ```
 

@@ -25,6 +25,7 @@
 
 ## tables
 
+- [add_columns_documents](../tables/add-columns-documents)
 - [create_documents](../tables/create-documents)
 - [create_documents_queries](../tables/create-documents-queries)
 - [create_queries](../tables/create-queries)
@@ -43,6 +44,15 @@
 
 ## utils
 
+
+**Classes**
+
+- [ParallelTqdm](../utils/ParallelTqdm)
+
+**Functions**
+
 - [batchify](../utils/batchify)
+- [generate_random_hash](../utils/generate-random-hash)
+- [get_list_columns_df](../utils/get-list-columns-df)
 - [plot](../utils/plot)
 

@@ -50,6 +50,12 @@ Run the search for documents or queries in parallel.
 
     Optional SQL filters to apply during the search.
 
+- **order_by** (*str | None*) – defaults to `None`
+
+- **tqdm_bar** (*bool*) – defaults to `True`
+
+    Whether to display a progress bar when searching.
+
 
 
 ## Examples
@@ -67,7 +73,6 @@ Run the search for documents or queries in parallel.
 ...     top_k=10,
 ... )
 
->>> assert len(documents) == 1
->>> assert len(documents[0]) == 10
+>>> assert len(documents) == 10
 ```
 

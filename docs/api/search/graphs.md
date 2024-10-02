@@ -38,6 +38,8 @@ Search for graphs in DuckDB using the provided queries.
 
     Optional SQL filters to apply during the search.
 
+- **tqdm_bar** (*bool*) – defaults to `True`
+
 
 
 ## Examples
@@ -53,17 +55,22 @@ Search for graphs in DuckDB using the provided queries.
 ...     fields=["title", "text"],
 ...     documents=documents,
 ... )
+| Table          | Size |
+|----------------|------|
+| documents      | 5183 |
+| bm25_documents | 5183 |
 
 >>> upload.queries(
 ...     database="test.duckdb",
 ...     queries=queries,
 ...     documents_queries=qrels,
 ... )
-
->>> scores = search.graphs(
-...     database="test.duckdb",
-...     queries=queries,
-...     top_k=10,
-... )
+| Table             | Size |
+|-------------------|------|
+| documents         | 5183 |
+| queries           | 807  |
+| bm25_documents    | 5183 |
+| bm25_queries      | 807  |
+| documents_queries | 916  |
 ```
 

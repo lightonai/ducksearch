@@ -64,6 +64,10 @@ Upload documents to DuckDB, create necessary schema, and index using BM25.
 
 - **limit** (*int | None*) – defaults to `None`
 
+- **tqdm_bar** (*bool*) – defaults to `True`
+
+    Whether to display a progress bar when uploading documents
+
 
 
 

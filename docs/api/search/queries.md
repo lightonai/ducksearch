@@ -38,6 +38,8 @@ Search for queries in the queries table using specified queries.
 
     Optional SQL filters to apply during the search.
 
+- **tqdm_bar** (*bool*) – defaults to `True`
+
 
 
 ## Examples
