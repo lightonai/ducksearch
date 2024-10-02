@@ -1,6 +1,6 @@
 # connect_to_duckdb
 
-Establish a connection to the DuckDB database.
+Establish a connection to the DuckDB database. Retry connecting if an error occurs.
 
 
 
@@ -17,6 +17,16 @@ Establish a connection to the DuckDB database.
 - **config** (*dict | None*) – defaults to `None`
 
     Optional configuration settings for the DuckDB connection.
+
+- **max_retry** (*int*) – defaults to `20`
+
+    The maximum number of times to retry connecting to DuckDB.
+
+- **sleep_time** (*float*) – defaults to `0.1`
+
+    The time to sleep between retries.
+
+- **kwargs**
 
 
 

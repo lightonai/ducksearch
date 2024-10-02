@@ -1,4 +1,5 @@
 import pathlib
+import time
 from functools import wraps
 
 import duckdb
@@ -8,8 +9,11 @@ def connect_to_duckdb(
     database: str,
     read_only: bool = False,
     config: dict | None = None,
+    max_retry: int = 30,
+    sleep_time: float = 0.1,
+    **kwargs,
 ):
-    """Establish a connection to the DuckDB database.
+    """Establish a connection to the DuckDB database. Retry connecting if an error occurs.
 
     Parameters
     ----------
@@ -19,6 +23,10 @@ def connect_to_duckdb(
         Whether to open the database in read-only mode. Default is False.
     config
         Optional configuration settings for the DuckDB connection.
+    max_retry
+        The maximum number of times to retry connecting to DuckDB.
+    sleep_time
+        The time to sleep between retries.
 
     Returns
     -------
@@ -26,11 +34,22 @@ def connect_to_duckdb(
         A DuckDB connection object.
 
     """
-    return (
-        duckdb.connect(database=database, read_only=read_only, config=config)
-        if config
-        else duckdb.connect(database=database, read_only=read_only)
-    )
+    current_retry = 0
+    while True:
+        try:
+            conn = (
+                duckdb.connect(database=database, read_only=read_only, config=config)
+                if config
+                else duckdb.connect(database=database, read_only=read_only)
+            )
+            break
+        except Exception as error:
+            if current_retry >= max_retry:
+                raise error
+            time.sleep(sleep_time)
+            current_retry += 1
+
+    return conn
 
 
 def execute_with_duckdb(
@@ -73,7 +92,10 @@ def execute_with_duckdb(
         ):
             """Connect to DuckDB and execute the query from the provided SQL file path(s)."""
             conn = connect_to_duckdb(
-                database=database, read_only=read_only, config=config
+                database=database,
+                read_only=read_only,
+                config=config,
+                **kwargs,
             )
 
             # Ensure relative_path is treated as a list

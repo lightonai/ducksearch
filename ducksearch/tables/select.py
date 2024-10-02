@@ -1,3 +1,5 @@
+import pandas as pd
+
 from ..decorators import execute_with_duckdb
 
 
@@ -6,7 +8,7 @@ from ..decorators import execute_with_duckdb
     read_only=True,
     fetch_df=True,
 )
-def select_documents() -> list[dict]:
+def _select_documents() -> list[dict]:
     """Select all documents from the documents table.
 
     Returns
@@ -25,6 +27,49 @@ def select_documents() -> list[dict]:
 
     >>> assert len(documents) == 3
     """
+
+
+def select_documents(
+    database: str,
+    schema: str,
+    limit: int | None = None,
+    config: dict | None = None,
+) -> list[dict]:
+    """Select all documents from the documents table.
+
+    Parameters
+    ----------
+    database
+        The name of the DuckDB database.
+    schema
+        The schema where the documents table is located.
+    config
+        Optional configuration options for the DuckDB connection.
+
+    Returns
+    -------
+    list[dict]
+        A list of dictionaries representing the documents.
+
+    Examples
+    --------
+    >>> from ducksearch import tables
+
+    >>> documents = tables.select_documents(
+    ...     database="test.duckdb",
+    ...     schema="bm25_tables",
+    ... )
+
+    >>> assert len(documents) == 3
+    """
+    return pd.DataFrame(
+        _select_documents(
+            database=database,
+            schema=schema,
+            limit="" if limit is None else f"LIMIT {limit}",
+            config=config,
+        )
+    )
 
 
 @execute_with_duckdb(

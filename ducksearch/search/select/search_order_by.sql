@@ -18,57 +18,57 @@ WITH group_queries AS (
         ON terms.termid = ftsdict.termid
 ),
 
+_nested_matchs AS (
+    SELECT
+        iq.query,
+        s.list_docids[0:{top_k_token}] as list_docids,
+        s.list_scores[0:{top_k_token}] as list_scores
+    FROM {schema}.scores s
+    INNER JOIN _input_queries iq
+        ON s.term = iq.term
+),
+
 _matchs AS (
     SELECT
         query,
         UNNEST(
-            s.list_docids[:{top_k_token}]
+            s.list_docids
         ) AS bm25id,
         UNNEST(
-            s.list_scores[:{top_k_token}]
+            s.list_scores
         ) AS score
-    FROM _input_queries iq
-    INNER JOIN {schema}.scores s
-        ON iq.term = s.term
+    FROM _nested_matchs s
 ),
 
 _matchs_scores AS (
     SELECT 
-        query AS _query,
+        query,
         bm25id,
-        SUM(score) AS _score
+        SUM(score) AS score
     FROM _matchs
     GROUP BY 1, 2
 ),
 
-_documents_filter AS (
+_match_scores_documents AS (
     SELECT
-        *
-    FROM {source_schema}.{source}
-    WHERE {filters}
-),
-
-_filtered_scores AS (
-    SELECT
-        _query,
-        _score,
-        s.* EXCLUDE (bm25id)
+        ms.query AS _query,
+        ms.bm25id,
+        ms.score,
+        s.*
     FROM _matchs_scores ms
-    INNER JOIN _documents_filter s
+    INNER JOIN {source_schema}.{source} s
         ON ms.bm25id = s.bm25id
 ),
 
 _partition_scores AS (
     SELECT
-        _query,
-        _score AS score,
-        * EXCLUDE (_score, _query),
-        RANK() OVER (PARTITION BY _query {order_by}, RANDOM() ASC) AS _row_number
-    FROM _filtered_scores
-    QUALIFY _row_number <= {top_k}
+        *,
+        RANK() OVER (PARTITION BY _query {order_by}, RANDOM() ASC) AS rank
+    FROM _match_scores_documents
+    QUALIFY rank <= {top_k}
 )
 
 SELECT 
-    * EXCLUDE (_row_number)
+    * 
 FROM _partition_scores
 {order_by};

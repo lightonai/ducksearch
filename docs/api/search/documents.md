@@ -38,6 +38,12 @@ Search for documents in the documents table using specified queries.
 
     Optional SQL filters to apply during the search.
 
+- **order_by** (*str | None*) – defaults to `None`
+
+- **tqdm_bar** (*bool*) – defaults to `True`
+
+    Whether to display a progress bar when searching.
+
 
 
 ## Examples

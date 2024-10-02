@@ -1,5 +1,9 @@
+import pandas as pd
+
+from ..hf import insert_documents as hf_insert_documents
 from ..search import update_index_documents, update_index_queries
 from ..tables import (
+    add_columns_documents,
     create_documents,
     create_documents_queries,
     create_queries,
@@ -7,8 +11,9 @@ from ..tables import (
     insert_documents,
     insert_documents_queries,
     insert_queries,
+    select_documents_columns,
 )
-from ..utils import plot
+from ..utils import get_list_columns_df, plot
 
 
 def documents(
@@ -28,6 +33,7 @@ def documents(
     dtypes: dict[str, str] | None = None,
     config: dict | None = None,
     limit: int | None = None,
+    tqdm_bar: bool = True,
 ) -> str:
     """Upload documents to DuckDB, create necessary schema, and index using BM25.
 
@@ -62,6 +68,8 @@ def documents(
         Number of parallel jobs to use for uploading documents. Default use all available processors.
     config
         Optional configuration dictionary for the DuckDB connection and other settings.
+    tqdm_bar
+        Whether to display a progress bar when uploading documents
 
     Returns
     -------
@@ -70,8 +78,6 @@ def documents(
 
     """
     schema = "bm25_tables"
-
-    fields = [field for field in fields if field != "id"]
 
     create_schema(
         database=database,
@@ -85,13 +91,62 @@ def documents(
         config=config,
     )
 
-    create_documents(
-        database=database,
-        schema=schema,
-        dtypes=dtypes,
-        fields=fields,
-        config=config,
+    columns = get_list_columns_df(
+        documents=documents,
     )
+
+    if isinstance(documents, str):
+        hf_insert_documents(
+            database=database,
+            schema=schema,
+            key=key,
+            url=documents,
+            config=config,
+            limit=limit,
+            dtypes=dtypes,
+        )
+
+    else:
+        if isinstance(documents, pd.DataFrame):
+            documents = documents.to_dict(orient="records")
+
+        create_documents(
+            database=database,
+            schema=schema,
+            dtypes=dtypes,
+            columns=columns,
+            config=config,
+        )
+
+        existing_columns = select_documents_columns(
+            database=database,
+            schema=schema,
+            config=config,
+        )
+
+        existing_columns = set(existing_columns)
+        columns_to_add = set(columns) - existing_columns
+        if columns_to_add:
+            add_columns_documents(
+                database=database,
+                schema=schema,
+                columns=list(columns_to_add),
+                dtypes=dtypes,
+                config=config,
+            )
+
+        insert_documents(
+            database=database,
+            schema=schema,
+            df=documents,
+            key=key,
+            columns=columns,
+            batch_size=batch_size,
+            dtypes=dtypes,
+            n_jobs=n_jobs,
+            config=config,
+            limit=limit,
+        )
 
     create_documents_queries(
         database=database,
@@ -99,21 +154,9 @@ def documents(
         config=config,
     )
 
-    insert_documents(
-        database=database,
-        schema=schema,
-        df=documents,
-        key=key,
-        fields=fields,
-        batch_size=batch_size,
-        dtypes=dtypes,
-        n_jobs=n_jobs,
-        config=config,
-        limit=limit,
-    )
-
     update_index_documents(
         database=database,
+        fields=fields,
         b=b,
         k1=k1,
         stemmer=stemmer,

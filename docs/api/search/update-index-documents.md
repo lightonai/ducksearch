@@ -10,6 +10,10 @@ Update the BM25 search index for documents.
 
     The name of the DuckDB database.
 
+- **fields** (*list[str]*)
+
+    The fields to index for each document.
+
 - **k1** (*float*) – defaults to `1.5`
 
     The BM25 k1 parameter, controls term saturation.

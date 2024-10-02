@@ -13,9 +13,7 @@
 </div>
 
 <p align="justify">
-DuckSearch is a lightweight and easy-to-use library to search documents. DuckSearch is built on top of DuckDB, a high-performance analytical database. DuckDB is designed to execute analytical SQL queries fast, and DuckSearch leverages this to provide efficient search and filtering features. DuckSearch index can be updated with new documents and documents can be deleted as well. 
-
-DuckSearch also supports HuggingFace datasets, allowing to index datasets directly from the HuggingFace Hub.
+DuckSearch is a lightweight and easy-to-use library to search documents. DuckSearch is built on top of DuckDB, a high-performance analytical database. DuckDB is designed to execute analytical SQL queries fast, and DuckSearch leverages this to provide efficient search and filtering features. DuckSearch index can be updated with new documents and documents can be deleted as well. DuckSearch also supports HuggingFace datasets, allowing to index datasets directly from the HuggingFace Hub.
 </p>
 
 ## Installation
@@ -63,8 +61,8 @@ documents = [
 
 upload.documents(
     database="ducksearch.duckdb",
-    key="id", # unique document identifier
-    fields=["title", "style", "date", "popularity"], # list of fields to index
+    key="id", # Unique document identifier
+    fields=["title", "style"], # List of fields to use for search.
     documents=documents,
     dtypes={
         "date": "DATE",
@@ -75,7 +73,7 @@ upload.documents(
 
 ## Search
 
-`search.documents` returns a list of list of documents ordered by relevance. We can control the number of documents to return using the `top_k` parameter. The following example demonstrates how to search for documents with the queries "punk" and "california" while filtering the results to include only documents with a date after 1970 and a popularity score greater than 8.
+`search.documents` returns a list of list of documents ordered by relevance. We can control the number of documents to return using the `top_k` parameter. The following example demonstrates how to search for documents with the queries "punk" and "california" while filtering the results to include only documents with a date after 1970 and a popularity score greater than 8. We will order the results by a weighted sum of the BM25 score and the popularity score provided in the document.
 
 ```python
 from ducksearch import search
@@ -85,6 +83,7 @@ search.documents(
     queries=["punk", "california"],
     top_k=10,
     filters="YEAR(date) >= 1970 AND popularity > 8",
+    order_by="0.8 * score + 0.2 * popularity DESC",
 )
 ```
 
@@ -115,6 +114,8 @@ search.documents(
 
 Filters are SQL expressions that are applied to the search results. We can use every filtering function DuckDB provides such as [date functions](https://duckdb.org/docs/sql/functions/date).
 
+Both `filters` and `order_by` parameters are optional. If not provided, the results are ordered by BM25 relevance and no filters are applied.
+
 ## Delete and update index
 
 We can delete documents and update the BM25 weights accordingly using the `delete.documents` function.
@@ -134,8 +135,7 @@ To update the index, we should first delete the documents and then upload the up
 
 ### HuggingFace
 
-The `upload.documents` function can also index HuggingFace datasets directly from the url. 
-The following example demonstrates how to index the FineWeb dataset from HuggingFace:
+The `upload.documents` function can also index HuggingFace datasets directly from the url. The following example demonstrates how to index the FineWeb dataset from HuggingFace. We will use the fields "text" and "url" for search. We will also specify the data types for the "date", "token_count", and "language_score" fields to be able to filter the results.
 
 ```python
 from ducksearch import upload
@@ -143,52 +143,77 @@ from ducksearch import upload
 upload.documents(
     database="fineweb.duckdb",
     key="id",
-    fields=["text", "url", "date", "language", "token_count", "language_score"],
+    fields=["text", "url"],
     documents="https://huggingface.co/datasets/HuggingFaceFW/fineweb/resolve/main/sample/10BT/000_00000.parquet",
     dtypes={
         "date": "DATE",
         "token_count": "INT",
         "language_score": "FLOAT",
     },
-    limit=1000, # demonstrate with a small dataset
+    limit=3000, # demonstrate with a small dataset
 )
 ```
 
-We can then search the FineWeb dataset with the `search.documents` function:
+We can then search the FineWeb dataset with the `search.documents` function. We order the results by BM25 score and then date.
 
 ```python
 from ducksearch import search
 
 search.documents(
     database="fineweb.duckdb",
-    queries="earth science",
+    queries=["earth science"],
     top_k=2,
+    order_by="score DESC, date DESC",
 )
 ```
 
 ```python
 [
-    {
-        "id": "<urn:uuid:1e6ae53b-e0d7-431b-8d46-290244e597e9>",
-        "text": "Earth Science Tutors in Rowland ...",
-        "date": Timestamp("2017-08-19 00:00:00"),
-        "language": "en",
-        "token_count": 313,
-        "language_score": 0.8718525171279907,
-        "score": 1.1588547229766846,
-    },
-    {
-        "score": 1.6727683544158936,
-        "id": "<urn:uuid:c732ce90-2fbf-41ad-8916-345f6c08e452>",
-        "text": "The existing atmosphere surrounding the earth contains ...",
-        "url": "http://www.accuracyingenesis.com/atmargon.html",
-        "date": Timestamp("2015-04-02 00:00:00"),
-        "language": "en",
-        "token_count": 1348,
-        "language_score": 0.9564403295516968,
-    },
+    [
+        {
+            "id": "<urn:uuid:1e6ae53b-e0d7-431b-8d46-290244e597e9>",
+            "text": "Earth Science Tutors in Rowland...",
+            "id_1": "<urn:uuid:1e6ae53b-e0d7-431b-8d46-290244e597e9>",
+            "dump": "CC-MAIN-2017-34",
+            "url": "http://rowland.universitytutor.com/rowland_earth-science-tutoring",
+            "date": Timestamp("2017-08-19 00:00:00"),
+            "file_path": "s3://commoncrawl/crawl-data/CC-MAIN-2017-34/segments/1502886105304.35/warc/CC-MAIN-20170819051034-20170819071034-00240.warc.gz",
+            "language": "en",
+            "language_score": 0.8718525171279907,
+            "token_count": 313,
+            "bm25id": 523,
+            "score": 2.3761106729507446,
+        },
+        {
+            "id": "<urn:uuid:cd94a04f-1632-4c8b-81d2-cb353163116e>",
+            "text": "- Geomagnetic field....",
+            "id_1": "<urn:uuid:cd94a04f-1632-4c8b-81d2-cb353163116e>",
+            "dump": "CC-MAIN-2022-21",
+            "url": "https://www.imperial.ac.uk/people/adrian.muxworthy/?respub-action=citation.html&id=1149861&noscript=noscript",
+            "date": Timestamp("2022-05-20 00:00:00"),
+            "file_path": "s3://commoncrawl/crawl-data/CC-MAIN-2022-21/segments/1652662530553.34/warc/CC-MAIN-20220519235259-20220520025259-00601.warc.gz",
+            "language": "en",
+            "language_score": 0.8225595951080322,
+            "token_count": 517,
+            "bm25id": 4783,
+            "score": 2.3569871187210083,
+        },
+    ]
 ]
+
 ```
+
+Note: by default, results are ordered by BM25 relevance.
+
+## Tables
+
+Ducksearch creates two distinct schemas: `bm25_tables`, `bm25_documents`.
+
+- We can find the uploaded documents in the `bm25_tables.documents` table.
+
+- We can find the inverted index in the `bm25_documents.scores` table. You can update the scores as you wish. Just note that tokens scores will be updated each time you upload documents (every tokens scores mentionned in the set of uploaded documents).
+
+- We can update the set of stopwords in the `bm25_documents.stopwords` table.
 
 ## Benchmark
 
@@ -209,6 +234,12 @@ search.documents(
 | scifact            | 0.6908    | 0.5533  | 0.9133   | 0.6527   | 0.6416  | 0.5468      | 2153.64        | 1.22                | 300 queries, 5K documents      |
 | trec-covid         | 0.9533    | 1.0     | 9.4800   | 1.0      | 0.0074  | 0.0077      | 112.38         | 22.15               | 50 queries, 171K documents     |
 | webis-touche2020   | 0.4130    | 0.5510  | 3.7347   | 0.7114   | 0.0564  | 0.0827      | 104.65         | 44.14               | 49 queries, 382K documents     |
+
+## References
+
+- [DuckDB](https://duckdb.org/)
+
+- [DuckDB Full Text Search](https://duckdb.org/docs/extensions/full_text_search.html): Note that DuckSearch rely partially on the DuckDB Full Text Search extension but accelerate the search process via `top_k_token` approximation, pre-computation of scores and multi-threading.
 
 ## License
 

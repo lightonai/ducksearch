@@ -2,13 +2,11 @@ import collections
 import os
 import shutil
 
-import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 from joblib import Parallel, delayed
 
 from ..decorators import execute_with_duckdb
-from ..hf import insert_documents as hf_insert_documents
 from ..utils import batchify
 from .create import (
     create_documents,
@@ -57,11 +55,16 @@ def write_parquet(
     """
     documents_table = collections.defaultdict(list)
 
+    fields = set()
     for document in documents:
-        if key is not None:
-            documents_table[key].append(document[key])
+        for field in document.keys():
+            if field != "id":
+                fields.add(field)
+
+    for document in documents:
+        documents_table["id"].append(document[key])
         for field in fields:
-            documents_table[field].append(document.get(field, ""))
+            documents_table[field].append(document.get(field, None))
 
     documents_path = os.path.join(".", "duckdb_tmp", "documents", f"{index}.parquet")
     documents_table = pa.Table.from_pydict(documents_table)
@@ -78,7 +81,7 @@ def insert_documents(
     schema: str,
     df: list[dict] | str,
     key: str,
-    fields: list[str] | str,
+    columns: list[str] | str,
     dtypes: dict[str, str] | None = None,
     batch_size: int = 30_000,
     n_jobs: int = -1,
@@ -97,7 +100,7 @@ def insert_documents(
         The list of document dictionaries or a string (URL) for a Hugging Face dataset to insert.
     key
         The field that uniquely identifies each document (e.g., 'id').
-    fields
+    columns
         The list of document fields to insert. Can be a string if inserting a single field.
     dtypes
         Optional dictionary specifying the DuckDB type for each field. Defaults to 'VARCHAR' for all unspecified fields.
@@ -122,33 +125,17 @@ def insert_documents(
     ...     database="test.duckdb",
     ...     schema="bm25_tables",
     ...     key="id",
-    ...     fields=["title", "text"],
+    ...     columns=["title", "text"],
     ...     df=df
     ... )
+
     """
-    if isinstance(fields, str):
-        fields = [fields]
-
-    fields = [field for field in fields if field != "id"]
-
-    if isinstance(df, str):
-        return hf_insert_documents(
-            database=database,
-            schema=schema,
-            key=key,
-            fields=fields,
-            url=df,
-            config=config,
-            limit=limit,
-        )
-
-    if isinstance(df, pd.DataFrame):
-        df = df.to_dict(orient="records")
+    columns = [column for column in columns if column != "id"]
 
     create_documents(
         database=database,
         schema=schema,
-        fields=fields,
+        columns=columns,
         config=config,
         dtypes=dtypes,
     )
@@ -165,7 +152,7 @@ def insert_documents(
         delayed(function=write_parquet)(
             batch,
             index,
-            fields,
+            columns,
             key,
         )
         for index, batch in enumerate(
@@ -179,9 +166,9 @@ def insert_documents(
         parquet_files=os.path.join(documents_path, "*.parquet"),
         config=config,
         key_field=f"df.{key}",
-        fields=", ".join(fields),
-        df_fields=", ".join([f"df.{field}" for field in fields]),
-        src_fields=", ".join([f"src.{field}" for field in fields]),
+        fields=", ".join(columns),
+        df_fields=", ".join([f"df.{field}" for field in columns]),
+        src_fields=", ".join([f"src.{field}" for field in columns]),
     )
 
     if os.path.exists(path=documents_path):

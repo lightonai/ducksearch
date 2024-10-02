@@ -1,32 +1,22 @@
-INSERT INTO {schema}.documents (id, {fields}) (
+INSERT INTO {schema}.documents (id, {_hf_tmp_columns}) (
     WITH _hf_dataset AS (
         SELECT
-            {key_field} AS id,
-            {fields}
-        FROM '{url}'
-        {limit_hf}
-    ),
-
-    _hf_row_number AS (
-        SELECT
-            *,
-            ROW_NUMBER() OVER (PARTITION BY id ORDER BY id, RANDOM()) AS _row_number
-        FROM _hf_dataset
+            id,
+            * EXCLUDE (id)
+        FROM {schema}._hf_tmp
     ),
 
     _new_hf_dataset AS (
         SELECT
-            _hf_row_number.*,
+            _hf_dataset.*,
             d.id AS existing_id
-        FROM _hf_row_number
+        FROM _hf_dataset
         LEFT JOIN {schema}.documents AS d
-            ON _hf_row_number.id = d.id
-        WHERE _row_number = 1
+            ON _hf_dataset.id = d.id
 
     )
 
-    SELECT id, {fields}
+    SELECT id, {_hf_tmp_columns} 
     FROM _new_hf_dataset
-    WHERE _row_number = 1
-    AND existing_id IS NULL
+    WHERE existing_id IS NULL
 );

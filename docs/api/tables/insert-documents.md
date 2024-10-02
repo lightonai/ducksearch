@@ -22,7 +22,7 @@ Insert documents into the documents table with optional multi-threading.
 
     The field that uniquely identifies each document (e.g., 'id').
 
-- **fields** (*list[str] | str*)
+- **columns** (*list[str] | str*)
 
     The list of document fields to insert. Can be a string if inserting a single field.
 
@@ -61,7 +61,7 @@ Insert documents into the documents table with optional multi-threading.
 ...     database="test.duckdb",
 ...     schema="bm25_tables",
 ...     key="id",
-...     fields=["title", "text"],
+...     columns=["title", "text"],
 ...     df=df
 ... )
 ```

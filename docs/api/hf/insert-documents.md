@@ -18,10 +18,6 @@ Insert documents from a Hugging Face dataset into DuckDB.
 
     The key field that uniquely identifies each document (e.g., 'query_id').
 
-- **fields** (*str | list[str]*)
-
-    A list of fields to be inserted from the dataset. If a single field is provided as a string, it will be converted to a list.
-
 - **url** (*str*)
 
     The URL of the Hugging Face dataset in Parquet format.
@@ -32,6 +28,8 @@ Insert documents from a Hugging Face dataset into DuckDB.
 
 - **limit** (*int | None*) – defaults to `None`
 
+- **dtypes** (*dict | None*) – defaults to `None`
+
 
 
 ## Examples
@@ -41,13 +39,24 @@ Insert documents from a Hugging Face dataset into DuckDB.
 
 >>> upload.documents(
 ...     database="test.duckdb",
-...     documents="hf://datasets/lightonai/lighton-ms-marco-mini/train.parquet",
-...     fields=["document_ids", "scores"],
+...     documents="hf://datasets/lightonai/lighton-ms-marco-mini/queries.parquet",
 ...     key="query_id",
+...     fields=["query_id", "text"],
 ... )
 | Table          | Size |
 |----------------|------|
 | documents      | 19   |
 | bm25_documents | 19   |
+
+>>> upload.documents(
+...     database="test.duckdb",
+...     documents="hf://datasets/lightonai/lighton-ms-marco-mini/documents.parquet",
+...     key="document_id",
+...     fields=["document_id", "text"],
+... )
+| Table          | Size |
+|----------------|------|
+| documents      | 51   |
+| bm25_documents | 51   |
 ```
 
