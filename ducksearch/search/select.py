@@ -43,6 +43,15 @@ def _search_query():
 
 
 @execute_with_duckdb(
+    relative_path="search/select/search_order_by.sql",
+    read_only=True,
+    fetch_df=True,
+)
+def _search_query_order_by():
+    """Perform a search on the documents or queries table in DuckDB."""
+
+
+@execute_with_duckdb(
     relative_path="search/select/search_filters.sql",
     read_only=True,
     fetch_df=True,
@@ -60,6 +69,7 @@ def documents(
     n_jobs: int = -1,
     config: dict | None = None,
     filters: str | None = None,
+    order_by: str | None = None,
     tqdm_bar: bool = True,
 ) -> list[list[dict]]:
     """Search for documents in the documents table using specified queries.
@@ -118,6 +128,7 @@ def documents(
         top_k_token=top_k_token,
         n_jobs=n_jobs,
         filters=filters,
+        order_by=order_by,
         tqdm_bar=tqdm_bar,
     )
 
@@ -198,6 +209,7 @@ def _search(
     random_hash: str,
     config: dict | None = None,
     filters: str | None = None,
+    order_by: str | None = None,
 ) -> list:
     """Perform a search on the specified source table (documents or queries).
 
@@ -231,6 +243,11 @@ def _search(
     """
     search_function = _search_query_filters if filters is not None else _search_query
 
+    if filters is None and order_by is not None:
+        search_function = _search_query_order_by
+
+    order_by = f"ORDER BY {order_by}" if order_by is not None else "ORDER BY score DESC"
+
     matchs = search_function(
         database=database,
         schema=schema,
@@ -242,6 +259,7 @@ def _search(
         group_id=group_id,
         filters=filters,
         config=config,
+        order_by=order_by,
     )
 
     candidates = collections.defaultdict(list)
@@ -265,6 +283,7 @@ def search(
     n_jobs: int = -1,
     config: dict | None = None,
     filters: str | None = None,
+    order_by: str | None = None,
     tqdm_bar: bool = True,
 ) -> list[list[dict]]:
     """Run the search for documents or queries in parallel.
@@ -397,6 +416,7 @@ def search(
                     random_hash=random_hash,
                     config=config,
                     filters=filters,
+                    order_by=order_by,
                 )
             )
             if tqdm_bar:
@@ -420,7 +440,8 @@ def search(
                 group_id,
                 random_hash,
                 config,
-                filters=filters,
+                filters,
+                order_by,
             )
             for group_id, batch_queries in batchs.items()
         ):

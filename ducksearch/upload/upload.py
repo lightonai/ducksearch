@@ -154,7 +154,6 @@ def documents(
         config=config,
     )
 
-    fields = [field for field in fields if field != "id"]
     update_index_documents(
         database=database,
         fields=fields,
