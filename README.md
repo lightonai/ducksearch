@@ -248,7 +248,7 @@ DuckSearch is released under the MIT license.
 ## Citation
 
 ```
-@misc{PyLate,
+@misc{DuckSearch,
   title={DuckSearch, efficient search with DuckDB},
   author={Sourty, Raphael},
   url={https://github.com/lightonai/ducksearch},
