@@ -1,4 +1,5 @@
 import pandas as pd
+from joblib import Parallel, delayed
 
 from ..hf import insert_documents as hf_insert_documents
 from ..search import update_index_documents, update_index_queries
@@ -13,11 +14,11 @@ from ..tables import (
     insert_queries,
     select_documents_columns,
 )
-from ..utils import get_list_columns_df, plot
+from ..utils import batchify, get_list_columns_df, plot, plot_shards
 
 
 def documents(
-    database: str,
+    database: str | list[str],
     key: str,
     fields: str | list[str],
     documents: list[dict] | str,
@@ -34,6 +35,8 @@ def documents(
     config: dict | None = None,
     limit: int | None = None,
     tqdm_bar: bool = True,
+    tmp_dir: str = "duckdb_tmp",
+    plot_resume: bool = True,
 ) -> str:
     """Upload documents to DuckDB, create necessary schema, and index using BM25.
 
@@ -78,6 +81,57 @@ def documents(
 
     """
     schema = "bm25_tables"
+
+    if isinstance(database, list):
+        if isinstance(documents, str):
+            raise ValueError(
+                "The `documents` parameter cannot be a string when uploading to multiple databases.",
+            )
+        documents = [
+            documents_shard
+            for documents_shard in batchify(
+                X=documents,
+                batch_size=len(documents) // len(database) + 1,
+            )
+        ]
+
+        Parallel(n_jobs=n_jobs, backend="threading")(
+            delayed(_upload_documents_shard)(
+                shard,
+                key,
+                fields,
+                documents[index],
+                k1,
+                b,
+                stemmer,
+                stopwords,
+                ignore,
+                strip_accents,
+                lower,
+                batch_size,
+                n_jobs,
+                dtypes,
+                config,
+                limit,
+                tqdm_bar,
+                f"{shard}.duckdb",
+            )
+            for index, (shard, documents_shard) in enumerate(
+                zip(database, documents),
+            )
+        )
+
+        return plot_shards(
+            databases=database,
+            config=config,
+            tables=[
+                f"{schema}.documents",
+                f"{schema}.queries",
+                "bm25_documents.docs",
+                "bm25_queries.docs",
+                "bm25_tables.documents_queries",
+            ],
+        )
 
     create_schema(
         database=database,
@@ -168,17 +222,18 @@ def documents(
         config=config,
     )
 
-    return plot(
-        database=database,
-        config=config,
-        tables=[
-            f"{schema}.documents",
-            f"{schema}.queries",
-            "bm25_documents.docs",
-            "bm25_queries.docs",
-            "bm25_tables.documents_queries",
-        ],
-    )
+    if plot_resume:
+        return plot(
+            database=database,
+            config=config,
+            tables=[
+                f"{schema}.documents",
+                f"{schema}.queries",
+                "bm25_documents.docs",
+                "bm25_queries.docs",
+                "bm25_tables.documents_queries",
+            ],
+        )
 
 
 def queries(
@@ -290,4 +345,47 @@ def queries(
             "bm25_queries.docs",
             "bm25_tables.documents_queries",
         ],
+    )
+
+
+def _upload_documents_shard(
+    database: str | list[str],
+    key: str,
+    fields: str | list[str],
+    documents_shard: list[dict] | str,
+    k1: float = 1.5,
+    b: float = 0.75,
+    stemmer: str = "porter",
+    stopwords: str | list[str] = None,
+    ignore: str = "(\\.|[^a-z])+",
+    strip_accents: bool = True,
+    lower: bool = True,
+    batch_size: int = 30_000,
+    n_jobs: int = -1,
+    dtypes: dict[str, str] | None = None,
+    config: dict | None = None,
+    limit: int | None = None,
+    tqdm_bar: bool = True,
+    tmp_dir: str = "duckdb_tmp",
+) -> str:
+    return documents(
+        database=database,
+        key=key,
+        fields=fields,
+        documents=documents_shard,
+        k1=k1,
+        b=b,
+        stemmer=stemmer,
+        stopwords=stopwords,
+        ignore=ignore,
+        strip_accents=strip_accents,
+        lower=lower,
+        batch_size=batch_size,
+        n_jobs=n_jobs,
+        dtypes=dtypes,
+        config=config,
+        limit=limit,
+        tqdm_bar=tqdm_bar,
+        tmp_dir=tmp_dir,
+        plot_resume=False,
     )

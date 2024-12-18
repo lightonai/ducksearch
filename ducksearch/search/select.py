@@ -5,7 +5,7 @@ import os
 import pyarrow as pa
 import pyarrow.parquet as pq
 import tqdm
-from joblib import delayed
+from joblib import Parallel, delayed
 
 from ..decorators import execute_with_duckdb
 from ..utils import ParallelTqdm, batchify, generate_random_hash
@@ -61,7 +61,7 @@ def _search_query_filters():
 
 
 def documents(
-    database: str,
+    database: str | list[str],
     queries: str | list[str],
     batch_size: int = 32,
     top_k: int = 10,
@@ -116,20 +116,45 @@ def documents(
     ... )
 
     """
-    return search(
-        database=database,
-        schema="bm25_documents",
-        source_schema="bm25_tables",
-        source="documents",
-        queries=queries,
-        config=config,
-        batch_size=batch_size,
-        top_k=top_k,
-        top_k_token=top_k_token,
-        n_jobs=n_jobs,
-        filters=filters,
-        order_by=order_by,
-        tqdm_bar=tqdm_bar,
+    if isinstance(database, str):
+        return search(
+            database=database,
+            schema="bm25_documents",
+            source_schema="bm25_tables",
+            source="documents",
+            queries=queries,
+            config=config,
+            batch_size=batch_size,
+            top_k=top_k,
+            top_k_token=top_k_token,
+            n_jobs=n_jobs,
+            filters=filters,
+            order_by=order_by,
+            tqdm_bar=tqdm_bar,
+        )
+
+    candidates = Parallel(n_jobs=n_jobs, backend="threading")(
+        delayed(search)(
+            shard,
+            "bm25_documents",
+            "bm25_tables",
+            "documents",
+            queries,
+            batch_size,
+            top_k,
+            top_k_token,
+            n_jobs,
+            config,
+            filters,
+            order_by,
+            tqdm_bar,
+        )
+        for shard in database
+    )
+
+    return aggregate_top_candidates(
+        candidates=candidates,
+        top_n=top_k,
     )
 
 
@@ -455,3 +480,46 @@ def search(
     )
 
     return matchs[0] if is_query_str else matchs
+
+
+def aggregate_top_candidates(candidates, top_n=20):
+    """
+    Aggregates and selects the top N candidates across all databases for each query.
+
+    Args:
+        candidates:
+            A list where each element corresponds to a database,
+            containing a list of queries, each query containing a list of candidate dicts.
+            Shape: (num_databases, num_queries, num_candidates_per_db)
+        top_n:
+            Number of top candidates to select per query (default is 20).
+
+    Returns:
+        A list of queries, each containing the top N candidates across all databases.
+        Shape: (num_queries, top_n)
+    """
+    if not candidates:
+        return []
+
+    num_queries, num_databases = len(candidates[0]), len(candidates)
+
+    aggregated = []
+
+    for q_idx in range(num_queries):
+        all_candidates = []
+        for db_idx in range(num_databases):
+            query_candidates = candidates[db_idx][q_idx]
+            all_candidates.extend(query_candidates)
+
+        # Sort all candidates by 'score' in descending order
+        sorted_candidates = sorted(
+            all_candidates,
+            key=lambda candidate: candidate.get("score", float("-inf")),
+            reverse=True,
+        )
+
+        # Select the top N candidates
+        top_candidates = sorted_candidates[:top_n]
+        aggregated.append(top_candidates)
+
+    return aggregated

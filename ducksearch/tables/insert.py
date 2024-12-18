@@ -31,6 +31,7 @@ def _insert_documents() -> None:
 
 
 def write_parquet(
+    database: str,
     documents: list[dict],
     index: int,
     fields: list[str],
@@ -66,7 +67,9 @@ def write_parquet(
         for field in fields:
             documents_table[field].append(document.get(field, None))
 
-    documents_path = os.path.join(".", "duckdb_tmp", "documents", f"{index}.parquet")
+    documents_path = os.path.join(
+        ".", f"{database}_tmp", "documents", f"{index}.parquet"
+    )
     documents_table = pa.Table.from_pydict(documents_table)
 
     pq.write_table(
@@ -140,16 +143,17 @@ def insert_documents(
         dtypes=dtypes,
     )
 
-    documents_path = os.path.join(".", "duckdb_tmp", "documents")
+    documents_path = os.path.join(".", f"{database}_tmp", "documents")
 
     if os.path.exists(path=documents_path):
         shutil.rmtree(documents_path)
 
-    os.makedirs(name=os.path.join(".", "duckdb_tmp"), exist_ok=True)
+    os.makedirs(name=os.path.join(".", f"{database}_tmp"), exist_ok=True)
     os.makedirs(name=documents_path, exist_ok=True)
 
     Parallel(n_jobs=n_jobs, backend="threading")(
         delayed(function=write_parquet)(
+            database,
             batch,
             index,
             columns,
@@ -173,6 +177,9 @@ def insert_documents(
 
     if os.path.exists(path=documents_path):
         shutil.rmtree(documents_path)
+
+    if os.path.exists(path=os.path.join(".", f"{database}_tmp")):
+        shutil.rmtree(os.path.join(".", f"{database}_tmp"))
 
 
 @execute_with_duckdb(
