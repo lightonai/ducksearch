@@ -30,6 +30,21 @@ def _insert_documents() -> None:
     """
 
 
+@execute_with_duckdb(
+    relative_path="tables/insert/fast_documents.sql",
+)
+def _insert_documents_fast() -> None:
+    """Insert documents into the documents table without any duplicate checks.
+
+    Parameters
+    ----------
+    database: str
+        The name of the DuckDB database.
+    config: dict, optional
+        The configuration options for the DuckDB connection.
+    """
+
+
 def write_parquet(
     database: str,
     documents: list[dict],
@@ -90,6 +105,7 @@ def insert_documents(
     n_jobs: int = -1,
     config: dict | None = None,
     limit: int | None = None,
+    fast: bool = False,
 ) -> None:
     """Insert documents into the documents table with optional multi-threading.
 
@@ -164,16 +180,28 @@ def insert_documents(
         )
     )
 
-    _insert_documents(
-        database=database,
-        schema=schema,
-        parquet_files=os.path.join(documents_path, "*.parquet"),
-        config=config,
-        key_field=f"df.{key}",
-        fields=", ".join(columns),
-        df_fields=", ".join([f"df.{field}" for field in columns]),
-        src_fields=", ".join([f"src.{field}" for field in columns]),
-    )
+    if fast:
+        _insert_documents_fast(
+            database=database,
+            schema=schema,
+            parquet_files=os.path.join(documents_path, "*.parquet"),
+            config=config,
+            key_field=f"df.{key}",
+            fields=", ".join(columns),
+            df_fields=", ".join([f"df.{field}" for field in columns]),
+            src_fields=", ".join([f"src.{field}" for field in columns]),
+        )
+    else:
+        _insert_documents(
+            database=database,
+            schema=schema,
+            parquet_files=os.path.join(documents_path, "*.parquet"),
+            config=config,
+            key_field=f"df.{key}",
+            fields=", ".join(columns),
+            df_fields=", ".join([f"df.{field}" for field in columns]),
+            src_fields=", ".join([f"src.{field}" for field in columns]),
+        )
 
     if os.path.exists(path=documents_path):
         shutil.rmtree(documents_path)

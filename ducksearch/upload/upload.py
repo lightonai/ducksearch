@@ -39,6 +39,7 @@ def documents(
     tqdm_bar: bool = True,
     tmp_dir: str = "duckdb_tmp",
     plot_resume: bool = True,
+    fast: bool = False,
 ) -> str:
     """Upload documents to DuckDB, create necessary schema, and index using BM25.
 
@@ -81,6 +82,8 @@ def documents(
         Optional configuration dictionary for the DuckDB connection and other settings.
     tqdm_bar
         Whether to display a progress bar when uploading documents
+    fast
+        Disable any duplicate checks, rely on pandas to load data from https source.
 
     Returns
     -------
@@ -90,6 +93,16 @@ def documents(
     """
     schema = "bm25_tables"
 
+    if isinstance(documents, list):
+        if isinstance(documents[0], str):
+            raise ValueError(
+                "Documents must be a list of dictionaries or a HF URL string."
+            )
+
+    if isinstance(documents, str):
+        if fast and documents.lower().endswith(".parquet"):
+            documents = pd.read_parquet(path=documents)
+
     if isinstance(database, list):
         offsets = [None] * len(database)
 
@@ -97,20 +110,13 @@ def documents(
             documents = documents.to_dict(orient="records")
 
         if isinstance(documents, list):
-            if isinstance(documents[0], str):
-                raise ValueError(
-                    "Documents must be a list of dictionaries or a HF URL string."
+            documents = [
+                documents_shard
+                for documents_shard in batchify(
+                    X=documents,
+                    batch_size=len(documents) // len(database) + 1,
                 )
-                pass
-
-            else:
-                documents = [
-                    documents_shard
-                    for documents_shard in batchify(
-                        X=documents,
-                        batch_size=len(documents) // len(database) + 1,
-                    )
-                ]
+            ]
 
         elif isinstance(documents, str):
             count = count_rows(
@@ -144,6 +150,7 @@ def documents(
                 offsets[index],
                 tqdm_bar,
                 f"{shard}.duckdb",
+                fast,
             )
             for index, (shard, documents_shard) in enumerate(
                 zip(database, documents),
@@ -229,6 +236,7 @@ def documents(
             n_jobs=n_jobs,
             config=config,
             limit=limit,
+            fast=fast,
         )
 
     create_documents_queries(
@@ -397,6 +405,7 @@ def _upload_documents_shard(
     offset: int | None = None,
     tqdm_bar: bool = True,
     tmp_dir: str = "duckdb_tmp",
+    fast: bool = False,
 ) -> str:
     documents(
         database=database,
@@ -419,6 +428,7 @@ def _upload_documents_shard(
         tqdm_bar=tqdm_bar,
         tmp_dir=tmp_dir,
         plot_resume=False,
+        fast=fast,
     )
 
     return []

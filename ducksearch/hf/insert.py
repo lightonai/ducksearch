@@ -61,6 +61,7 @@ def insert_documents(
     limit: int | None = None,
     offset: int | None = None,
     dtypes: dict | None = None,
+    fast: bool = False,
 ) -> None:
     """Insert documents from a Hugging Face dataset into DuckDB.
 
@@ -106,18 +107,6 @@ def insert_documents(
     | bm25_documents | 51   |
 
     """
-    if isinstance(url, list):
-        for single_url in url:
-            _insert_documents(
-                database=database,
-                schema=schema,
-                key=key,
-                url=single_url,
-                config=config,
-                limit=limit,
-                dtypes=dtypes,
-            )
-
     offset_hf = f"OFFSET {offset}" if offset is not None else ""
     limit_hf = f"LIMIT {limit}" if limit is not None else ""
 
