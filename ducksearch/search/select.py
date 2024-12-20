@@ -133,6 +133,11 @@ def documents(
             tqdm_bar=tqdm_bar,
         )
 
+    database = [shard for shard in database if os.path.exists(shard)]
+
+    if not database:
+        raise FileNotFoundError("No database shards found.")
+
     candidates = Parallel(n_jobs=n_jobs, backend="threading")(
         delayed(search)(
             shard,

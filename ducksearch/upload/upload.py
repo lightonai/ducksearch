@@ -1,6 +1,7 @@
 import pandas as pd
 from joblib import Parallel, delayed
 
+from ..hf import count_rows
 from ..hf import insert_documents as hf_insert_documents
 from ..search import update_index_documents, update_index_queries
 from ..tables import (
@@ -34,6 +35,7 @@ def documents(
     dtypes: dict[str, str] | None = None,
     config: dict | None = None,
     limit: int | None = None,
+    offset: int | None = None,
     tqdm_bar: bool = True,
     tmp_dir: str = "duckdb_tmp",
     plot_resume: bool = True,
@@ -69,6 +71,12 @@ def documents(
         Number of documents to process per batch.
     n_jobs
         Number of parallel jobs to use for uploading documents. Default use all available processors.
+    dtypes
+        Dictionary mapping field names to DuckDB data types.
+    limit
+        Maximum number of documents to upload. If None, all documents are uploaded.
+    offset
+        Number of documents to skip before uploading. Default is None.
     config
         Optional configuration dictionary for the DuckDB connection and other settings.
     tqdm_bar
@@ -83,19 +91,39 @@ def documents(
     schema = "bm25_tables"
 
     if isinstance(database, list):
-        if isinstance(documents, str):
-            raise ValueError(
-                "The `documents` parameter cannot be a string when uploading to multiple databases.",
-            )
-        documents = [
-            documents_shard
-            for documents_shard in batchify(
-                X=documents,
-                batch_size=len(documents) // len(database) + 1,
-            )
-        ]
+        offsets = [None] * len(database)
 
-        Parallel(n_jobs=n_jobs, backend="threading")(
+        if isinstance(documents, pd.DataFrame):
+            documents = documents.to_dict(orient="records")
+
+        if isinstance(documents, list):
+            if isinstance(documents[0], str):
+                raise ValueError(
+                    "Documents must be a list of dictionaries or a HF URL string."
+                )
+                pass
+
+            else:
+                documents = [
+                    documents_shard
+                    for documents_shard in batchify(
+                        X=documents,
+                        batch_size=len(documents) // len(database) + 1,
+                    )
+                ]
+
+        elif isinstance(documents, str):
+            count = count_rows(
+                database=":memory:",
+                url=documents,
+            )[0]["count"]
+
+            count = count if limit is None else min(count, limit)
+            limit = count // len(database)
+            offsets = [index * limit for index, _ in enumerate(database)]
+            documents = [documents] * len(database)
+
+        Parallel(n_jobs=n_jobs)(
             delayed(_upload_documents_shard)(
                 shard,
                 key,
@@ -113,6 +141,7 @@ def documents(
                 dtypes,
                 config,
                 limit,
+                offsets[index],
                 tqdm_bar,
                 f"{shard}.duckdb",
             )
@@ -149,7 +178,10 @@ def documents(
         documents=documents,
     )
 
-    if isinstance(documents, str):
+    if isinstance(documents, pd.DataFrame):
+        documents = documents.to_dict(orient="records")
+
+    if isinstance(documents, str) or isinstance(documents[0], str):
         hf_insert_documents(
             database=database,
             schema=schema,
@@ -157,13 +189,10 @@ def documents(
             url=documents,
             config=config,
             limit=limit,
+            offset=offset,
             dtypes=dtypes,
         )
-
     else:
-        if isinstance(documents, pd.DataFrame):
-            documents = documents.to_dict(orient="records")
-
         create_documents(
             database=database,
             schema=schema,
@@ -365,10 +394,11 @@ def _upload_documents_shard(
     dtypes: dict[str, str] | None = None,
     config: dict | None = None,
     limit: int | None = None,
+    offset: int | None = None,
     tqdm_bar: bool = True,
     tmp_dir: str = "duckdb_tmp",
 ) -> str:
-    return documents(
+    documents(
         database=database,
         key=key,
         fields=fields,
@@ -385,7 +415,10 @@ def _upload_documents_shard(
         dtypes=dtypes,
         config=config,
         limit=limit,
+        offset=offset,
         tqdm_bar=tqdm_bar,
         tmp_dir=tmp_dir,
         plot_resume=False,
     )
+
+    return []

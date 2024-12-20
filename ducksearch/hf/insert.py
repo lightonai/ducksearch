@@ -11,6 +11,14 @@ def _insert_documents() -> None:
 
 
 @execute_with_duckdb(
+    relative_path="hf/select/count.sql",
+    fetch_df=True,
+)
+def count_rows() -> None:
+    """Insert the documents from Hugging Face datasets into DuckDB."""
+
+
+@execute_with_duckdb(
     relative_path="hf/select/columns.sql",
     fetch_df=True,
     read_only=True,
@@ -48,9 +56,10 @@ def insert_documents(
     database: str,
     schema: str,
     key: str,
-    url: str,
+    url: list[str] | str,
     config: dict | None = None,
     limit: int | None = None,
+    offset: int | None = None,
     dtypes: dict | None = None,
 ) -> None:
     """Insert documents from a Hugging Face dataset into DuckDB.
@@ -97,6 +106,19 @@ def insert_documents(
     | bm25_documents | 51   |
 
     """
+    if isinstance(url, list):
+        for single_url in url:
+            _insert_documents(
+                database=database,
+                schema=schema,
+                key=key,
+                url=single_url,
+                config=config,
+                limit=limit,
+                dtypes=dtypes,
+            )
+
+    offset_hf = f"OFFSET {offset}" if offset is not None else ""
     limit_hf = f"LIMIT {limit}" if limit is not None else ""
 
     _insert_tmp_documents(
@@ -105,6 +127,7 @@ def insert_documents(
         url=url,
         key_field=key,
         config=config,
+        offset_hf=offset_hf,
         limit_hf=limit_hf,
     )
 

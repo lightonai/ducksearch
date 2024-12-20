@@ -5,6 +5,7 @@ CREATE OR REPLACE TABLE {schema}._hf_tmp AS (
             *
         FROM '{url}'
         {limit_hf}
+        {offset_hf}
     ),
 
     _hf_row_number AS (

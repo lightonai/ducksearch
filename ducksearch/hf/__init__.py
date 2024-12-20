@@ -1,3 +1,3 @@
-from .insert import insert_documents
+from .insert import count_rows, insert_documents
 
-__all__ = ["insert_documents"]
+__all__ = ["count_rows", "insert_documents"]
