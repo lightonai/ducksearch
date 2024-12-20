@@ -30,7 +30,23 @@ def _insert_documents() -> None:
     """
 
 
+@execute_with_duckdb(
+    relative_path="tables/insert/fast_documents.sql",
+)
+def _insert_documents_fast() -> None:
+    """Insert documents into the documents table without any duplicate checks.
+
+    Parameters
+    ----------
+    database: str
+        The name of the DuckDB database.
+    config: dict, optional
+        The configuration options for the DuckDB connection.
+    """
+
+
 def write_parquet(
+    database: str,
     documents: list[dict],
     index: int,
     fields: list[str],
@@ -66,7 +82,9 @@ def write_parquet(
         for field in fields:
             documents_table[field].append(document.get(field, None))
 
-    documents_path = os.path.join(".", "duckdb_tmp", "documents", f"{index}.parquet")
+    documents_path = os.path.join(
+        ".", f"{database}_tmp", "documents", f"{index}.parquet"
+    )
     documents_table = pa.Table.from_pydict(documents_table)
 
     pq.write_table(
@@ -87,6 +105,7 @@ def insert_documents(
     n_jobs: int = -1,
     config: dict | None = None,
     limit: int | None = None,
+    fast: bool = False,
 ) -> None:
     """Insert documents into the documents table with optional multi-threading.
 
@@ -140,16 +159,17 @@ def insert_documents(
         dtypes=dtypes,
     )
 
-    documents_path = os.path.join(".", "duckdb_tmp", "documents")
+    documents_path = os.path.join(".", f"{database}_tmp", "documents")
 
     if os.path.exists(path=documents_path):
         shutil.rmtree(documents_path)
 
-    os.makedirs(name=os.path.join(".", "duckdb_tmp"), exist_ok=True)
+    os.makedirs(name=os.path.join(".", f"{database}_tmp"), exist_ok=True)
     os.makedirs(name=documents_path, exist_ok=True)
 
     Parallel(n_jobs=n_jobs, backend="threading")(
         delayed(function=write_parquet)(
+            database,
             batch,
             index,
             columns,
@@ -160,19 +180,34 @@ def insert_documents(
         )
     )
 
-    _insert_documents(
-        database=database,
-        schema=schema,
-        parquet_files=os.path.join(documents_path, "*.parquet"),
-        config=config,
-        key_field=f"df.{key}",
-        fields=", ".join(columns),
-        df_fields=", ".join([f"df.{field}" for field in columns]),
-        src_fields=", ".join([f"src.{field}" for field in columns]),
-    )
+    if fast:
+        _insert_documents_fast(
+            database=database,
+            schema=schema,
+            parquet_files=os.path.join(documents_path, "*.parquet"),
+            config=config,
+            key_field=f"df.{key}",
+            fields=", ".join(columns),
+            df_fields=", ".join([f"df.{field}" for field in columns]),
+            src_fields=", ".join([f"src.{field}" for field in columns]),
+        )
+    else:
+        _insert_documents(
+            database=database,
+            schema=schema,
+            parquet_files=os.path.join(documents_path, "*.parquet"),
+            config=config,
+            key_field=f"df.{key}",
+            fields=", ".join(columns),
+            df_fields=", ".join([f"df.{field}" for field in columns]),
+            src_fields=", ".join([f"src.{field}" for field in columns]),
+        )
 
     if os.path.exists(path=documents_path):
         shutil.rmtree(documents_path)
+
+    if os.path.exists(path=os.path.join(".", f"{database}_tmp")):
+        shutil.rmtree(os.path.join(".", f"{database}_tmp"))
 
 
 @execute_with_duckdb(

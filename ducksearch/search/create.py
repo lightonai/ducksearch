@@ -5,7 +5,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 from ..decorators import execute_with_duckdb
-from ..utils import batchify
+from ..utils import batchify, generate_random_hash
 
 
 @execute_with_duckdb(
@@ -219,6 +219,8 @@ def update_index(
     | bm25_documents | 5183 |
 
     """
+    random_hash = generate_random_hash()
+
     if stemmer is None or not stemmer:
         stemmer = "none"
 
@@ -247,18 +249,22 @@ def update_index(
     if not settings_exists:
         if not isinstance(stopwords, str):
             stopwords_table = pa.Table.from_pydict({"sw": stopwords})
-            pq.write_table(stopwords_table, "_stopwords.parquet", compression="snappy")
+            pq.write_table(
+                stopwords_table,
+                f"_stopwords_{random_hash}.parquet",
+                compression="snappy",
+            )
 
             _insert_stopwords(
                 database=database,
                 schema=bm25_schema,
-                parquet_file="_stopwords.parquet",
+                parquet_file=f"_stopwords_{random_hash}.parquet",
                 config=config,
             )
             stopwords = f"{bm25_schema}.stopwords"
 
-            if os.path.exists("_stopwords.parquet"):
-                os.remove("_stopwords.parquet")
+            if os.path.exists(f"_stopwords_{random_hash}.parquet"):
+                os.remove(f"_stopwords_{random_hash}.parquet")
 
         _create_settings(
             database=database,
@@ -351,12 +357,12 @@ def update_index(
         desc="Indexing",
     ):
         termids = pa.Table.from_pydict({"termid": [term["termid"] for term in batch]})
-        pq.write_table(termids, "_termids.parquet", compression="snappy")
+        pq.write_table(termids, f"_termids_{random_hash}.parquet", compression="snappy")
 
         _update_terms(
             database=database,
             schema=bm25_schema,
-            parquet_file="_termids.parquet",
+            parquet_file=f"_termids_{random_hash}.parquet",
             config=config,
         )
 
@@ -365,7 +371,7 @@ def update_index(
             schema=bm25_schema,
             num_docs=num_docs,
             avgdl=avgdl,
-            parquet_file="_termids.parquet",
+            parquet_file=f"_termids_{random_hash}.parquet",
             k1=settings["k1"],
             b=settings["b"],
             config=config,
@@ -391,8 +397,8 @@ def update_index(
         config=config,
     )
 
-    if os.path.exists("_termids.parquet"):
-        os.remove("_termids.parquet")
+    if os.path.exists(f"_termids_{random_hash}.parquet"):
+        os.remove(f"_termids_{random_hash}.parquet")
 
 
 def update_index_documents(
